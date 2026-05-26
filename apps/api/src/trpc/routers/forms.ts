@@ -1,309 +1,372 @@
 import { z } from 'zod';
 import { router, publicProcedure, protectedProcedure } from '../init';
-import { CreateFormSchema, UpdateFormSchema } from '@chaiforms/schemas';
-import { forms } from '@chaiforms/db';
-import { eq, and } from 'drizzle-orm';
-import { slugify } from '@chaiforms/utils';
+import { forms, fields } from '@chaiforms/db';
+import { eq, and, desc, ilike } from 'drizzle-orm';
+import { TRPCError } from '@trpc/server';
 
+// ─── Zod Schemas ─────────────────────────────────────────────────────────────
+const sanitize = (s: string) => s.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+
+const FormTitleSchema = z
+  .string()
+  .min(1, 'Title is required')
+  .max(500, 'Title too long (max 500 chars)')
+  .transform(sanitize);
+
+const FormDescSchema = z
+  .string()
+  .max(5000, 'Description too long (max 5000 chars)')
+  .transform(sanitize)
+  .optional();
+
+const SlugSchema = z
+  .string()
+  .min(1)
+  .max(255)
+  .regex(/^[a-z0-9-]+$/, 'Slug may only contain lowercase letters, numbers and hyphens')
+  .transform((s) => s.toLowerCase().trim());
+
+const FormSettingsSchema = z.object({
+  submitButtonText: z.string().max(100).default('Submit'),
+  successMessage: z.string().max(1000).default('Thank you for your response!'),
+  redirectUrl: z.string().url().optional().nullable(),
+  allowMultipleResponses: z.boolean().default(true),
+  requireLogin: z.boolean().default(false),
+  showProgressBar: z.boolean().default(true),
+  shuffleFields: z.boolean().default(false),
+  isMultiPage: z.boolean().default(false),
+  notifyCreator: z.boolean().default(true),
+  notifyRespondent: z.boolean().default(false),
+  collectEmailOfRespondent: z.boolean().default(false),
+}).partial();
+
+const CreateFormSchema = z.object({
+  title: FormTitleSchema,
+  description: FormDescSchema,
+}).strict();
+
+const UpdateFormSchema = z.object({
+  formId: z.string().uuid('Invalid form ID'),
+  title: FormTitleSchema.optional(),
+  description: FormDescSchema,
+  settings: FormSettingsSchema.optional(),
+  password: z.string().max(100).nullable().optional(),
+  maxResponses: z.number().int().min(1).max(1_000_000).nullable().optional(),
+  expiresAt: z.date().nullable().optional(),
+}).strict();
+
+const PaginationSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(50).default(20),
+});
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+async function assertFormOwner(db: any, formId: string, userId: string) {
+  const form = await db.query.forms.findFirst({
+    where: and(eq(forms.id, formId), eq(forms.userId, userId)),
+    columns: { id: true, status: true, slug: true, responseCount: true },
+  });
+  if (!form) {
+    throw new TRPCError({
+      code: 'NOT_FOUND',
+      message: 'Form not found or you do not have access.',
+    });
+  }
+  return form;
+}
+
+async function ensureUniqueSlug(db: any, base: string, excludeId?: string): Promise<string> {
+  let slug = slugify(base);
+  let attempt = 0;
+  while (true) {
+    const candidate = attempt === 0 ? slug : `${slug}-${attempt}`;
+    const existing = await db.query.forms.findFirst({
+      where: eq(forms.slug, candidate),
+      columns: { id: true },
+    });
+    if (!existing || existing.id === excludeId) return candidate;
+    attempt++;
+    if (attempt > 100) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Could not generate a unique slug.' });
+  }
+}
+
+// ─── Router ───────────────────────────────────────────────────────────────────
 export const formsRouter = router({
+  /** Create a new form (draft) */
   create: protectedProcedure
     .input(CreateFormSchema)
     .mutation(async ({ ctx, input }) => {
       const { db, userId } = ctx;
-      
-      let slug = slugify(input.title);
-      let counter = 1;
-      
-      // Ensure unique slug
-      while (true) {
-        const existing = await db.query.forms.findFirst({
-          where: eq(forms.slug, slug),
-        });
-        if (!existing) break;
-        slug = `${slugify(input.title)}-${counter++}`;
-      }
+      const slug = await ensureUniqueSlug(db, input.title);
 
-      const newForm = await db
-        .insert(forms)
-        .values({
-          userId: userId!,
-          title: input.title,
-          description: input.description,
-          slug,
-          status: 'draft',
-          visibility: 'unlisted',
-        })
-        .returning();
+      const [form] = await db.insert(forms).values({
+        userId,
+        title: input.title,
+        description: input.description ?? null,
+        slug,
+        status: 'draft',
+        visibility: 'unlisted',
+      }).returning();
 
-      return {
-        success: true,
-        form: newForm[0],
-      };
+      return { success: true, form };
     }),
 
+  /** Update form metadata / settings */
   update: protectedProcedure
     .input(UpdateFormSchema)
     .mutation(async ({ ctx, input }) => {
       const { db, userId } = ctx;
-      const { formId, ...updateData } = input;
+      const { formId, ...updates } = input;
 
-      // Verify ownership
-      const form = await db.query.forms.findFirst({
-        where: and(eq(forms.id, formId), eq(forms.userId, userId!)),
-      });
+      await assertFormOwner(db, formId, userId);
 
-      if (!form) {
-        throw new Error('Form not found or you do not have access');
-      }
-
-      const updated = await db
-        .update(forms)
-        .set(updateData)
+      const [form] = await db.update(forms)
+        .set({ ...updates, updatedAt: new Date() })
         .where(eq(forms.id, formId))
         .returning();
 
-      return {
-        success: true,
-        form: updated[0],
-      };
+      return { success: true, form };
     }),
 
+  /** Get a single form (owner only) with fields */
   getById: protectedProcedure
-    .input(z.object({ formId: z.string().uuid() }))
+    .input(z.object({ formId: z.string().uuid('Invalid form ID') }))
     .query(async ({ ctx, input }) => {
       const { db, userId } = ctx;
 
       const form = await db.query.forms.findFirst({
-        where: and(eq(forms.id, input.formId), eq(forms.userId, userId!)),
+        where: and(eq(forms.id, input.formId), eq(forms.userId, userId)),
         with: {
-          fields: true,
-          responses: {
-            limit: 10,
-          },
+          fields: { orderBy: (f: any, { asc }: any) => asc(f.order) },
+          theme: true,
         },
       });
 
       if (!form) {
-        throw new Error('Form not found or you do not have access');
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found.' });
       }
 
       return form;
     }),
 
+  /** List current user's forms, with optional status filter */
   list: protectedProcedure
-    .input(z.object({
-      page: z.number().int().default(1),
-      limit: z.number().int().max(50).default(20),
+    .input(PaginationSchema.extend({
       status: z.enum(['draft', 'published', 'archived']).optional(),
     }))
     .query(async ({ ctx, input }) => {
       const { db, userId } = ctx;
-      const skip = (input.page - 1) * input.limit;
+      const offset = (input.page - 1) * input.limit;
 
-      let whereCondition: any = eq(forms.userId, userId!);
-      if (input.status) {
-        whereCondition = and(whereCondition, eq(forms.status, input.status));
-      }
+      const where = input.status
+        ? and(eq(forms.userId, userId), eq(forms.status, input.status))
+        : eq(forms.userId, userId);
 
       const userForms = await db.query.forms.findMany({
-        where: whereCondition,
+        where,
         limit: input.limit,
-        offset: skip,
-        orderBy: (forms, { desc }) => desc(forms.createdAt),
+        offset,
+        orderBy: (f: any, { desc }: any) => desc(f.updatedAt),
       });
 
-      return {
-        forms: userForms,
-        page: input.page,
-        limit: input.limit,
-      };
+      return { forms: userForms, page: input.page, limit: input.limit };
     }),
 
+  /** Publish a form (requires at least 1 field) */
   publish: protectedProcedure
     .input(z.object({
       formId: z.string().uuid(),
-      visibility: z.enum(['public', 'unlisted']),
+      visibility: z.enum(['public', 'unlisted']).default('public'),
     }))
     .mutation(async ({ ctx, input }) => {
       const { db, userId } = ctx;
+      await assertFormOwner(db, input.formId, userId);
 
-      // Verify ownership
-      const form = await db.query.forms.findFirst({
-        where: and(eq(forms.id, input.formId), eq(forms.userId, userId!)),
+      // Guard: must have at least one field
+      const fieldCount = await db.query.fields.findMany({
+        where: eq(fields.formId, input.formId),
+        columns: { id: true },
+        limit: 1,
       });
-
-      if (!form) {
-        throw new Error('Form not found or you do not have access');
+      if (fieldCount.length === 0) {
+        throw new TRPCError({
+          code: 'PRECONDITION_FAILED',
+          message: 'Add at least one field before publishing.',
+        });
       }
 
-      const updated = await db
-        .update(forms)
-        .set({
-          status: 'published',
-          visibility: input.visibility,
-          publishedAt: new Date(),
-        })
+      const [form] = await db.update(forms)
+        .set({ status: 'published', visibility: input.visibility, publishedAt: new Date(), updatedAt: new Date() })
         .where(eq(forms.id, input.formId))
         .returning();
 
-      return {
-        success: true,
-        form: updated[0],
-      };
+      return { success: true, form };
     }),
 
+  /** Revert to draft */
   unpublish: protectedProcedure
     .input(z.object({ formId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const { db, userId } = ctx;
+      await assertFormOwner(db, input.formId, userId);
 
-      const form = await db.query.forms.findFirst({
-        where: and(eq(forms.id, input.formId), eq(forms.userId, userId!)),
-      });
-
-      if (!form) {
-        throw new Error('Form not found or you do not have access');
-      }
-
-      const updated = await db
-        .update(forms)
-        .set({
-          status: 'draft',
-          publishedAt: null,
-        })
+      const [form] = await db.update(forms)
+        .set({ status: 'draft', publishedAt: null, updatedAt: new Date() })
         .where(eq(forms.id, input.formId))
         .returning();
 
-      return {
-        success: true,
-        form: updated[0],
-      };
+      return { success: true, form };
     }),
 
+  /** Archive a form */
+  archive: protectedProcedure
+    .input(z.object({ formId: z.string().uuid() }))
+    .mutation(async ({ ctx, input }) => {
+      const { db, userId } = ctx;
+      await assertFormOwner(db, input.formId, userId);
+
+      const [form] = await db.update(forms)
+        .set({ status: 'archived', updatedAt: new Date() })
+        .where(eq(forms.id, input.formId))
+        .returning();
+
+      return { success: true, form };
+    }),
+
+  /** Get public form by slug (for filling) */
   getPublicBySlug: publicProcedure
     .input(z.object({
-      slug: z.string(),
-      password: z.string().optional(),
+      slug: SlugSchema,
+      password: z.string().max(100).optional(),
     }))
     .query(async ({ ctx, input }) => {
       const { db } = ctx;
 
       const form = await db.query.forms.findFirst({
-        where: and(
-          eq(forms.slug, input.slug),
-          eq(forms.status, 'published')
-        ),
+        where: and(eq(forms.slug, input.slug), eq(forms.status, 'published')),
         with: {
-          fields: {
-            orderBy: (fields, { asc }) => asc(fields.order),
-          },
+          fields: { orderBy: (f: any, { asc }: any) => asc(f.order) },
+          theme: true,
         },
       });
 
       if (!form) {
-        throw new Error('Form not found');
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found or no longer available.' });
       }
 
-      // Check password if set
-      if (form.password && form.password !== input.password) {
-        throw new Error('Invalid password');
+      if (form.expiresAt && form.expiresAt < new Date()) {
+        throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'This form has expired.' });
       }
 
-      return {
-        id: form.id,
-        title: form.title,
-        description: form.description,
-        slug: form.slug,
-        fields: form.fields,
-        settings: form.settings,
-        theme: form.customTheme,
-      };
+      if (form.maxResponses && form.responseCount >= form.maxResponses) {
+        throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'This form is no longer accepting responses.' });
+      }
+
+      if (form.password) {
+        if (!input.password) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'This form requires a password.' });
+        }
+        if (form.password !== input.password) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Incorrect password.' });
+        }
+      }
+
+      // Increment view count asynchronously (non-blocking)
+      db.update(forms)
+        .set({ viewCount: (form.viewCount ?? 0) + 1 })
+        .where(eq(forms.id, form.id))
+        .catch(() => {}); // fire-and-forget
+
+      // Strip internal fields before returning
+      const { password: _pwd, userId: _uid, ...safeForm } = form;
+      return safeForm;
     }),
 
-  explore: publicProcedure
-    .input(z.object({
-      page: z.number().int().default(1),
-      limit: z.number().int().max(24).default(12),
-      category: z.string().optional(),
+  /** Explore public forms (for templates page) */
+  listTemplates: publicProcedure
+    .input(PaginationSchema.extend({
+      category: z.string().max(50).optional(),
     }))
     .query(async ({ ctx, input }) => {
       const { db } = ctx;
-      const skip = (input.page - 1) * input.limit;
+      const offset = (input.page - 1) * input.limit;
 
-      const publicForms = await db.query.forms.findMany({
-        where: and(
-          eq(forms.status, 'published'),
-          eq(forms.visibility, 'public')
-        ),
+      const where = and(
+        eq(forms.status, 'published'),
+        eq(forms.visibility, 'public'),
+        eq(forms.isTemplate, true),
+        ...(input.category ? [eq(forms.templateCategory, input.category)] : []),
+      );
+
+      const templates = await db.query.forms.findMany({
+        where,
         limit: input.limit,
-        offset: skip,
-        orderBy: (forms, { desc }) => desc(forms.viewCount),
+        offset,
+        orderBy: (f: any, { desc }: any) => desc(f.viewCount),
+        with: { fields: { columns: { id: true } } },
       });
 
-      return {
-        forms: publicForms.map(f => ({
-          id: f.id,
-          title: f.title,
-          slug: f.slug,
-          responseCount: f.responseCount,
-          viewCount: f.viewCount,
-        })),
-        page: input.page,
-        limit: input.limit,
-      };
+      return { templates, page: input.page, limit: input.limit };
     }),
 
+  /** Delete a form permanently */
   delete: protectedProcedure
     .input(z.object({ formId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const { db, userId } = ctx;
+      const form = await assertFormOwner(db, input.formId, userId);
 
-      const form = await db.query.forms.findFirst({
-        where: and(eq(forms.id, input.formId), eq(forms.userId, userId!)),
-      });
-
-      if (!form) {
-        throw new Error('Form not found or you do not have access');
+      // Prevent deletion of published forms (must unpublish first)
+      if (form.status === 'published') {
+        throw new TRPCError({
+          code: 'PRECONDITION_FAILED',
+          message: 'Unpublish the form before deleting it.',
+        });
       }
 
       await db.delete(forms).where(eq(forms.id, input.formId));
-
       return { success: true };
     }),
 
+  /** Duplicate a form (creates draft copy) */
   duplicate: protectedProcedure
     .input(z.object({ formId: z.string().uuid() }))
     .mutation(async ({ ctx, input }) => {
       const { db, userId } = ctx;
 
-      const form = await db.query.forms.findFirst({
-        where: and(eq(forms.id, input.formId), eq(forms.userId, userId!)),
+      const original = await db.query.forms.findFirst({
+        where: and(eq(forms.id, input.formId), eq(forms.userId, userId)),
         with: { fields: true },
       });
 
-      if (!form) {
-        throw new Error('Form not found or you do not have access');
+      if (!original) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found.' });
       }
 
-      const newSlug = `${form.slug}-copy`;
-      const newForm = await db
-        .insert(forms)
-        .values({
-          userId: userId!,
-          title: `${form.title} (Copy)`,
-          description: form.description,
-          slug: newSlug,
-          status: 'draft',
-          visibility: form.visibility,
-          themeId: form.themeId,
-          customTheme: form.customTheme,
-          settings: form.settings,
-        })
-        .returning();
+      const newSlug = await ensureUniqueSlug(db, `${original.title} copy`);
 
-      return {
-        success: true,
-        form: newForm[0],
-      };
+      const [newForm] = await db.insert(forms).values({
+        userId,
+        title: `${original.title} (Copy)`,
+        description: original.description,
+        slug: newSlug,
+        status: 'draft',
+        visibility: 'unlisted',
+        themeId: original.themeId,
+        customTheme: original.customTheme,
+        settings: original.settings,
+      }).returning();
+
+      return { success: true, form: newForm };
     }),
 });

@@ -1,270 +1,431 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Button } from '@chaiforms/ui/components/button';
-import { Card } from '@chaiforms/ui/components/card';
+import Link from 'next/link';
+import { trpc } from '@/lib/trpc';
 import {
-  ResponseTrendChart,
-  ConversionFunnelChart,
-  FieldEngagementChart,
-  AbandonmentMetrics,
-  StatsCard,
-} from '@/components/AnalyticsCharts';
-import { BarChart3, Download, ChevronLeft, TrendingUp } from 'lucide-react';
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 
-interface AnalyticsData {
-  timeline: Array<{ date: string; responses: number }>;
-  funnel: {
-    funnel: Array<{ stage: string; count: number; percentage: number }>;
-    conversionRate: number;
-  };
-  engagement: Array<{ fieldLabel: string; focusCount: number; engagementScore: number }>;
-  metrics: {
-    totalResponses: number;
-    completeResponses: number;
-    incompleteResponses: number;
-    completionRate: number;
-    averageTimeSeconds: number;
-  };
-  abandonment: {
-    totalStarts: number;
-    completions: number;
-    abandonments: number;
-    inProgress: number;
-    abandonmentRate: number;
-    completionRate: number;
-  };
+const COLORS = ['#f97316', '#f59e0b', '#10b981', '#8b5cf6', '#3b82f6', '#ec4899'];
+
+function StatBox({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return (
+    <div
+      style={{
+        padding: '1.25rem',
+        background: 'var(--bg-card)',
+        border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: '12px',
+        transition: 'border-color 0.2s',
+      }}
+      onMouseEnter={(e) =>
+        ((e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(249,115,22,0.3)')
+      }
+      onMouseLeave={(e) =>
+        ((e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.07)')
+      }
+    >
+      <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', fontWeight: 500, margin: 0 }}>
+        {label}
+      </p>
+      <p
+        style={{
+          color: 'var(--text-primary)',
+          fontSize: '1.75rem',
+          fontWeight: 700,
+          fontFamily: 'Poppins, sans-serif',
+          marginTop: '0.375rem',
+          marginBottom: 0,
+        }}
+      >
+        {value}
+      </p>
+      {sub && (
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem', marginBottom: 0 }}>
+          {sub}
+        </p>
+      )}
+    </div>
+  );
 }
 
-export default function AnalyticsDashboard() {
+const customTooltipStyle = {
+  background: 'var(--bg-elevated)',
+  border: '1px solid rgba(255,255,255,0.07)',
+  borderRadius: '8px',
+  color: 'var(--text-primary)',
+  fontSize: '0.8125rem',
+};
+
+export default function AnalyticsPage() {
   const params = useParams();
   const formId = params.formId as string;
-  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [days, setDays] = useState(30);
 
-  useEffect(() => {
-    const loadAnalytics = async () => {
-      setLoading(true);
-      try {
-        // TODO: Load analytics data from tRPC
-        // const timeline = await trpc.analyticsAdvanced.getResponseTimeline.query({ formId, days: 30 });
-        // const funnel = await trpc.analyticsAdvanced.getConversionFunnel.query({ formId, days: 30 });
-        // const engagement = await trpc.analyticsAdvanced.getFieldEngagement.query({ formId });
-        // const metrics = await trpc.analyticsAdvanced.getResponseMetrics.query({ formId });
-        // const abandonment = await trpc.analyticsAdvanced.getAbandonmentAnalysis.query({ formId, days: 30 });
+  const { data: form } = trpc.forms.getById.useQuery({ formId });
+  const { data: summary } = trpc.analytics.getSummary.useQuery({
+    formId,
+    dateRange: days === 7 ? '7d' : days === 30 ? '30d' : '90d',
+  });
+  const { data: timeline } = trpc.analyticsAdvanced.getResponseTimeline.useQuery({ formId, days });
+  const { data: funnel } = trpc.analyticsAdvanced.getConversionFunnel.useQuery({ formId, days });
+  const { data: metrics } = trpc.analyticsAdvanced.getResponseMetrics.useQuery({ formId });
+  const { data: abandonment } = trpc.analyticsAdvanced.getAbandonmentAnalysis.useQuery({
+    formId,
+    days,
+  });
 
-        // Mock data for demonstration
-        setData({
-          timeline: [
-            { date: '2026-04-27', responses: 5 },
-            { date: '2026-04-28', responses: 8 },
-            { date: '2026-04-29', responses: 12 },
-            { date: '2026-04-30', responses: 15 },
-            { date: '2026-05-01', responses: 22 },
-            { date: '2026-05-02', responses: 18 },
-            { date: '2026-05-03', responses: 25 },
-          ],
-          funnel: {
-            funnel: [
-              { stage: 'Views', count: 350, percentage: 100 },
-              { stage: 'Starts', count: 280, percentage: 80 },
-              { stage: 'Submissions', count: 168, percentage: 60 },
-            ],
-            conversionRate: 48,
-          },
-          engagement: [
-            { fieldLabel: 'Full Name', focusCount: 280, engagementScore: 280 },
-            { fieldLabel: 'Email', focusCount: 275, engagementScore: 275 },
-            { fieldLabel: 'Phone', focusCount: 198, engagementScore: 198 },
-            { fieldLabel: 'Message', focusCount: 168, engagementScore: 168 },
-          ],
-          metrics: {
-            totalResponses: 168,
-            completeResponses: 168,
-            incompleteResponses: 0,
-            completionRate: 100,
-            averageTimeSeconds: 245,
-          },
-          abandonment: {
-            totalStarts: 280,
-            completions: 168,
-            abandonments: 112,
-            inProgress: 0,
-            abandonmentRate: 40,
-            completionRate: 60,
-          },
-        });
-
-        console.log('Analytics loaded for form:', formId);
-      } catch (error) {
-        console.error('Failed to load analytics:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAnalytics();
-  }, [formId, dateRange]);
-
-  const handleExport = () => {
-    if (!data) return;
-
-    const csv = generateAnalyticsCSV(data);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `analytics-${formId}-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
+  const s = {
+    base: 'var(--bg-base)',
+    card: 'var(--bg-card)',
+    elevated: 'var(--bg-elevated)',
+    text: 'var(--text-primary)',
+    muted: 'var(--text-secondary)',
+    accent: 'var(--chai-orange)',
+    border: 'rgba(255,255,255,0.07)',
   };
 
-  const generateAnalyticsCSV = (analyticsData: AnalyticsData): string => {
-    const lines: string[] = [];
-
-    // Header
-    lines.push('ChaiForms Analytics Export');
-    lines.push(`Form ID,${formId}`);
-    lines.push(`Export Date,${new Date().toISOString()}`);
-    lines.push('');
-
-    // Summary Metrics
-    lines.push('SUMMARY METRICS');
-    lines.push(`Total Responses,${analyticsData.metrics.totalResponses}`);
-    lines.push(`Completion Rate,${analyticsData.metrics.completionRate}%`);
-    lines.push(`Average Time (seconds),${analyticsData.metrics.averageTimeSeconds}`);
-    lines.push(`Conversion Rate,${analyticsData.funnel.conversionRate}%`);
-    lines.push('');
-
-    // Timeline Data
-    lines.push('RESPONSE TIMELINE');
-    lines.push('Date,Responses');
-    analyticsData.timeline.forEach((point) => {
-      lines.push(`${point.date},${point.responses}`);
-    });
-    lines.push('');
-
-    // Funnel Data
-    lines.push('CONVERSION FUNNEL');
-    lines.push('Stage,Count,Percentage');
-    analyticsData.funnel.funnel.forEach((stage) => {
-      lines.push(`${stage.stage},${stage.count},${stage.percentage}%`);
-    });
-    lines.push('');
-
-    // Field Engagement
-    lines.push('FIELD ENGAGEMENT');
-    lines.push('Field,Focus Count,Engagement Score');
-    analyticsData.engagement.forEach((field) => {
-      lines.push(`${field.fieldLabel},${field.focusCount},${field.engagementScore}`);
-    });
-
-    return lines.join('\n');
-  };
+  const abandonData = abandonment
+    ? [
+        { name: 'Completed', value: abandonment.completions },
+        { name: 'Abandoned', value: abandonment.abandonments },
+        { name: 'In Progress', value: Math.max(0, abandonment.inProgress) },
+      ]
+    : [];
+  const abandonColors = ['#10b981', '#ef4444', '#f59e0b'];
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div style={{ minHeight: '100vh', background: s.base }}>
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Link href={`/forms/${formId}/edit`}>
-                <Button variant="ghost" size="sm">
-                  <ChevronLeft className="w-4 h-4 mr-1" />
-                  Back to Editor
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                  <BarChart3 className="w-6 h-6" />
-                  Analytics Dashboard
-                </h1>
-              </div>
-            </div>
+      <header
+        style={{
+          background: 'rgba(16,16,24,0.95)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: `1px solid ${s.border}`,
+          padding: '0 1.5rem',
+          height: '56px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <Link href={`/forms/${formId}/edit`} style={{ color: s.muted, textDecoration: 'none', fontSize: '0.8125rem' }}>
+            ← Editor
+          </Link>
+          <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
+          <span style={{ color: s.text, fontWeight: 600, fontSize: '0.9rem' }}>Analytics</span>
+        </div>
 
-            <div className="flex items-center gap-2">
-              {/* Date Range Selector */}
-              <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-                {(['7d', '30d', '90d'] as const).map((range) => (
-                  <Button
-                    key={range}
-                    variant={dateRange === range ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => setDateRange(range)}
-                  >
-                    {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
-                  </Button>
-                ))}
-              </div>
-
-              <Button onClick={handleExport} variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-1" />
-                Export CSV
-              </Button>
-            </div>
-          </div>
+        {/* Day range selector */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.25rem',
+            background: 'rgba(255,255,255,0.04)',
+            padding: '0.25rem',
+            borderRadius: '8px',
+            border: `1px solid ${s.border}`,
+          }}
+        >
+          {[7, 30, 90].map((d) => (
+            <button
+              key={d}
+              onClick={() => setDays(d)}
+              style={{
+                padding: '0.3rem 0.75rem',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.8125rem',
+                background: days === d ? 'rgba(249,115,22,0.25)' : 'transparent',
+                color: days === d ? s.accent : s.muted,
+                fontWeight: days === d ? 600 : 400,
+                transition: 'all 0.15s',
+              }}
+            >
+              {d}d
+            </button>
+          ))}
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        {loading ? (
-          <div className="flex items-center justify-center h-96">
-            <p className="text-slate-600">Loading analytics...</p>
-          </div>
-        ) : data ? (
-          <div className="space-y-6">
-            {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatsCard
-                label="Total Responses"
-                value={data.metrics.totalResponses}
-                icon={<TrendingUp className="w-6 h-6" />}
-                color="blue"
-              />
-              <StatsCard
-                label="Completion Rate"
-                value={`${data.metrics.completionRate}%`}
-                icon={<TrendingUp className="w-6 h-6" />}
-                color="green"
-              />
-              <StatsCard
-                label="Avg. Time (sec)"
-                value={data.metrics.averageTimeSeconds}
-                icon={<TrendingUp className="w-6 h-6" />}
-                color="amber"
-              />
-              <StatsCard
-                label="Conversion Rate"
-                value={`${data.funnel.conversionRate}%`}
-                icon={<TrendingUp className="w-6 h-6" />}
-                color="purple"
-              />
-            </div>
+      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+        <h1
+          style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            fontFamily: 'Poppins, sans-serif',
+            marginBottom: '0.375rem',
+            color: s.text,
+          }}
+        >
+          Analytics
+        </h1>
+        <p style={{ color: s.muted, marginBottom: '2rem', fontSize: '0.875rem' }}>
+          {form?.title} — last {days} days
+        </p>
 
-            {/* Charts Row 1 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <ResponseTrendChart data={data.timeline} />
-              <ConversionFunnelChart data={data.funnel.funnel} />
-            </div>
+        {/* Stats Row */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))',
+            gap: '1rem',
+            marginBottom: '2rem',
+          }}
+        >
+          <StatBox label="Total Views" value={summary?.totalViews ?? '—'} />
+          <StatBox label="Form Starts" value={summary?.totalStarts ?? '—'} />
+          <StatBox label="Completions" value={summary?.totalCompletions ?? '—'} />
+          <StatBox
+            label="Completion Rate"
+            value={`${summary?.completionRate ?? 0}%`}
+            sub="starts → completions"
+          />
+          <StatBox
+            label="Avg. Time"
+            value={metrics?.averageTimeSeconds ? `${metrics.averageTimeSeconds}s` : '—'}
+          />
+          <StatBox label="Abandon Rate" value={`${summary?.abandonRate ?? 0}%`} />
+        </div>
 
-            {/* Charts Row 2 */}
-            <div className="grid grid-cols-1 gap-6">
-              <FieldEngagementChart data={data.engagement} />
-            </div>
-
-            {/* Abandonment Analysis */}
-            <AbandonmentMetrics {...data.abandonment} />
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-96">
-            <p className="text-slate-600">No analytics data available</p>
+        {/* Response Timeline */}
+        {timeline && timeline.length > 0 && (
+          <div
+            style={{
+              padding: '1.5rem',
+              background: s.card,
+              border: `1px solid ${s.border}`,
+              borderRadius: '12px',
+              marginBottom: '1.5rem',
+            }}
+          >
+            <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem', color: s.text }}>
+              📈 Response Timeline
+            </h2>
+            <ResponsiveContainer width="100%" height={240}>
+              <LineChart data={timeline}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                  tickFormatter={(d) => d.slice(5)}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip contentStyle={customTooltipStyle} />
+                <Line
+                  type="monotone"
+                  dataKey="responses"
+                  stroke="#f97316"
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 5, fill: '#f97316' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         )}
-      </div>
+
+        {/* Bottom Row: Funnel + Abandonment */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          {/* Conversion Funnel */}
+          {funnel ? (
+            <div
+              style={{
+                padding: '1.5rem',
+                background: s.card,
+                border: `1px solid ${s.border}`,
+                borderRadius: '12px',
+              }}
+            >
+              <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem', color: s.text }}>
+                🔽 Conversion Funnel
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+                {funnel.funnel.map((stage: any) => (
+                  <div key={stage.stage}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginBottom: '0.375rem',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.875rem', color: s.text, fontWeight: 500 }}>
+                        {stage.stage}
+                      </span>
+                      <span style={{ fontSize: '0.875rem', color: s.muted }}>
+                        {stage.count} ({stage.percentage}%)
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        height: '6px',
+                        background: 'rgba(255,255,255,0.06)',
+                        borderRadius: '3px',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: '100%',
+                          width: `${stage.percentage}%`,
+                          background: 'linear-gradient(90deg, #f97316, #f59e0b)',
+                          borderRadius: '3px',
+                          transition: 'width 0.6s ease',
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p style={{ marginTop: '1.25rem', color: s.muted, fontSize: '0.8125rem' }}>
+                Overall conversion:{' '}
+                <strong style={{ color: s.accent }}>{funnel.conversionRate}%</strong>
+              </p>
+            </div>
+          ) : (
+            <div
+              style={{
+                padding: '1.5rem',
+                background: s.card,
+                border: `1px solid ${s.border}`,
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: s.muted,
+                fontSize: '0.875rem',
+              }}
+            >
+              No funnel data available
+            </div>
+          )}
+
+          {/* Abandonment Pie */}
+          {abandonment ? (
+            <div
+              style={{
+                padding: '1.5rem',
+                background: s.card,
+                border: `1px solid ${s.border}`,
+                borderRadius: '12px',
+              }}
+            >
+              <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem', color: s.text }}>
+                📉 Abandonment Analysis
+              </h2>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    data={abandonData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {abandonData.map((_: any, i: number) => (
+                      <Cell key={i} fill={abandonColors[i]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={customTooltipStyle} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1.25rem', marginTop: '0.75rem' }}>
+                {abandonData.map((item, i) => (
+                  <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: abandonColors[i] }} />
+                    <span style={{ fontSize: '0.75rem', color: s.muted }}>{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                padding: '1.5rem',
+                background: s.card,
+                border: `1px solid ${s.border}`,
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: s.muted,
+                fontSize: '0.875rem',
+              }}
+            >
+              No abandonment data available
+            </div>
+          )}
+        </div>
+
+        {/* Field-level bar chart if metrics has field data */}
+        {metrics?.fieldMetrics && metrics.fieldMetrics.length > 0 && (
+          <div
+            style={{
+              padding: '1.5rem',
+              background: s.card,
+              border: `1px solid ${s.border}`,
+              borderRadius: '12px',
+            }}
+          >
+            <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem', color: s.text }}>
+              📊 Field Completion Rates
+            </h2>
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={metrics.fieldMetrics} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                <XAxis
+                  type="number"
+                  tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  domain={[0, 100]}
+                  tickFormatter={(v) => `${v}%`}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="label"
+                  tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                  width={120}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={customTooltipStyle}
+                  formatter={(val: number) => [`${val}%`, 'Completion']}
+                />
+                <Bar dataKey="completionRate" fill="#f97316" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

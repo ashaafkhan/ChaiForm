@@ -63,6 +63,9 @@ importers:
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
+      drizzle-orm:
+        specifier: ^0.29.1
+        version: 0.29.5(pg@8.21.0)
       hono:
         specifier: ^4.2.10
         version: 4.12.23
@@ -200,6 +203,9 @@ importers:
 
   packages/db:
     dependencies:
+      bcryptjs:
+        specifier: ^2.4.3
+        version: 2.4.3
       drizzle-orm:
         specifier: ^0.29.1
         version: 0.29.5(pg@8.21.0)
@@ -207,12 +213,18 @@ importers:
         specifier: ^8.11.3
         version: 8.21.0
     devDependencies:
+      '@types/bcryptjs':
+        specifier: ^2.4.6
+        version: 2.4.6
       drizzle-kit:
         specifier: ^0.20.8
         version: 0.20.18
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.19.41)(typescript@5.9.3)
+      tsx:
+        specifier: ^4.22.3
+        version: 4.22.3
       typescript:
         specifier: ^5.3.3
         version: 5.9.3
@@ -2557,6 +2569,10 @@ packages:
     dev: true
     optional: true
 
+  /@types/bcryptjs@2.4.6:
+    resolution: {integrity: sha512-9xlo6R2qDs5uixm0bcIqCeMCE6HiQsIyel9KQySStiyqNl2tnj2mP3DX1Nf56MD6KMenNNlBBsy3LJ7gUEQPXQ==}
+    dev: true
+
   /@types/d3-array@3.2.2:
     resolution: {integrity: sha512-hOLWVbm7uRza0BYXpIIW5pxfrKe0W+D5lrFiAEYR+pb6w3N2SwSMaJbXdUfSEv+dT4MfHBLtn5js0LAWaO6otw==}
     dev: false
@@ -3247,6 +3263,10 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
     dev: true
+
+  /bcryptjs@2.4.3:
+    resolution: {integrity: sha512-V/Hy/X9Vt7f3BbPJEi8BdVFMByHi+jNXrYkW3huaybV/kQ0KJg0Y6PkEMbn+zeT+i+SiKZ/HMqJGIIt4LZDqNQ==}
+    dev: false
 
   /bcryptjs@3.0.3:
     resolution: {integrity: sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g==}

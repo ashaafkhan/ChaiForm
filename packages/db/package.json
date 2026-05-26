@@ -4,21 +4,29 @@
   "description": "Database schema and utilities",
   "private": true,
   "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
+  },
   "type": "module",
+
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "migrate": "node --input-type=module --eval \"import('./src/migrate.ts')\"",
+    "migrate": "tsx src/migrate.ts",
     "studio": "drizzle-kit studio",
-    "seed": "node --input-type=module --eval \"import('./src/seed.ts')\"",
+    "seed": "tsx src/seed.ts",
     "generate": "drizzle-kit generate:pg"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "drizzle-orm": "^0.29.1",
     "pg": "^8.11.3"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "drizzle-kit": "^0.20.8",
     "ts-node": "^10.9.2",
+    "tsx": "^4.22.3",
     "typescript": "^5.3.3"
   }
 }

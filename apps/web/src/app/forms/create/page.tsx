@@ -3,140 +3,291 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { trpc } from '@/lib/trpc';
 
 export default function CreateFormPage() {
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const createMutation = trpc.forms.create.useMutation({
+    onSuccess: (data) => {
+      router.push(`/forms/${data.form.id}/edit`);
+    },
+    onError: (err) => setError(err.message),
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
     if (!title.trim()) {
       setError('Form title is required');
       return;
     }
-
-    setLoading(true);
-
-    try {
-      // Call tRPC create form endpoint
-      const response = await fetch('/api/forms/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({ title, description }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create form');
-      }
-
-      const data = await response.json();
-      router.push(`/forms/${data.form.id}/edit`);
-    } catch (err) {
-      setError('Failed to create form. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    createMutation.mutate({
+      title: title.trim(),
+      description: description.trim() || undefined,
+    });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="max-w-2xl mx-auto px-4 py-12">
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--bg-base)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem',
+      }}
+    >
+      {/* Decorative blobs */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '-20%',
+          right: '-10%',
+          width: '500px',
+          height: '500px',
+          background: 'radial-gradient(circle, rgba(249,115,22,0.07) 0%, transparent 70%)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      <div
+        style={{
+          position: 'fixed',
+          bottom: '-20%',
+          left: '-10%',
+          width: '500px',
+          height: '500px',
+          background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+
+      <div style={{ width: '100%', maxWidth: '560px', position: 'relative', zIndex: 1 }}>
+        {/* Back Link */}
         <Link
           href="/dashboard"
-          className="inline-block mb-6 text-blue-600 hover:text-blue-700 font-semibold"
+          style={{
+            color: 'var(--text-secondary)',
+            textDecoration: 'none',
+            fontSize: '0.875rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.375rem',
+            marginBottom: '1.75rem',
+            transition: 'color 0.15s ease',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-primary)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-secondary)'; }}
         >
           ← Back to Dashboard
         </Link>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create a New Form</h1>
-          <p className="text-gray-600 mb-6">Get started by giving your form a title</p>
+        {/* Header */}
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '1.75rem' }}>☕</span>
+            <h1
+              style={{
+                fontSize: '1.75rem',
+                fontWeight: 700,
+                fontFamily: 'Poppins, sans-serif',
+                color: 'var(--text-primary)',
+                margin: 0,
+              }}
+            >
+              Create New Form
+            </h1>
+          </div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.375rem' }}>
+            Give your form a name and optional description to get started
+          </p>
+        </div>
 
-          <form onSubmit={handleCreate} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-                {error}
-              </div>
-            )}
+        {/* Card */}
+        <div
+          style={{
+            background: 'rgba(22,22,31,0.92)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.09)',
+            borderRadius: '16px',
+            padding: '2rem',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.4)',
+          }}
+        >
+          {/* Error */}
+          {error && (
+            <div
+              style={{
+                background: 'rgba(239,68,68,0.08)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                borderRadius: '8px',
+                padding: '0.75rem 1rem',
+                marginBottom: '1.25rem',
+                color: '#ef4444',
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}
+            >
+              ⚠️ {error}
+            </div>
+          )}
 
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.375rem' }}>
+            {/* Title */}
             <div>
-              <label htmlFor="title" className="block text-sm font-semibold text-gray-900 mb-2">
-                Form Title *
+              <label
+                htmlFor="title"
+                className="label-field"
+                style={{ display: 'block', marginBottom: '0.5rem' }}
+              >
+                Form Title <span style={{ color: '#f97316' }}>*</span>
               </label>
               <input
                 id="title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                className="input-field"
                 placeholder="e.g., Customer Feedback Survey"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
                 required
+                maxLength={500}
+                autoFocus
+                style={{ fontSize: '1rem', width: '100%' }}
               />
-              <p className="text-sm text-gray-600 mt-1">Give your form a descriptive title</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.375rem' }}>
+                {title.length}/500 characters
+              </p>
             </div>
 
+            {/* Description */}
             <div>
-              <label htmlFor="description" className="block text-sm font-semibold text-gray-900 mb-2">
-                Description
+              <label
+                htmlFor="desc"
+                className="label-field"
+                style={{ display: 'block', marginBottom: '0.5rem' }}
+              >
+                Description{' '}
+                <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span>
               </label>
               <textarea
-                id="description"
+                id="desc"
+                placeholder="Tell respondents what this form is about..."
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add a description (optional)"
-                rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                onChange={e => setDescription(e.target.value)}
+                maxLength={2000}
+                style={{
+                  width: '100%',
+                  padding: '0.625rem 0.875rem',
+                  background: 'var(--bg-elevated)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '10px',
+                  fontSize: '0.875rem',
+                  fontFamily: 'Inter, sans-serif',
+                  resize: 'vertical',
+                  minHeight: '100px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s ease',
+                  boxSizing: 'border-box',
+                  lineHeight: 1.6,
+                }}
+                onFocus={e => { (e.currentTarget as HTMLTextAreaElement).style.borderColor = 'rgba(249,115,22,0.5)'; }}
+                onBlur={e => { (e.currentTarget as HTMLTextAreaElement).style.borderColor = 'rgba(255,255,255,0.1)'; }}
               />
-              <p className="text-sm text-gray-600 mt-1">Help respondents understand the purpose of this form</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.375rem' }}>
+                {description.length}/2000 characters
+              </p>
             </div>
 
-            <div className="flex gap-4">
+            {/* Tips */}
+            <div
+              style={{
+                background: 'rgba(249,115,22,0.06)',
+                border: '1px solid rgba(249,115,22,0.15)',
+                borderRadius: '10px',
+                padding: '0.875rem 1rem',
+                fontSize: '0.8125rem',
+                color: 'var(--text-secondary)',
+                lineHeight: 1.6,
+              }}
+            >
+              <p style={{ margin: 0, fontWeight: 500, color: '#f97316', marginBottom: '0.25rem' }}>💡 Tip</p>
+              <p style={{ margin: 0 }}>
+                You&apos;ll be taken to the form builder after creation where you can add questions,
+                set up logic, and customize the appearance.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '0.25rem' }}>
               <button
                 type="submit"
-                disabled={loading}
-                className="flex-1 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                className="btn-primary"
+                disabled={createMutation.isPending}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  fontSize: '0.9375rem',
+                  fontWeight: 600,
+                  opacity: createMutation.isPending ? 0.7 : 1,
+                  cursor: createMutation.isPending ? 'not-allowed' : 'pointer',
+                }}
               >
-                {loading ? 'Creating...' : 'Create Form'}
+                {createMutation.isPending ? (
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                    <span
+                      style={{
+                        width: '14px',
+                        height: '14px',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        borderTopColor: '#fff',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        animation: 'spin 0.7s linear infinite',
+                      }}
+                    />
+                    Creating...
+                  </span>
+                ) : (
+                  'Create Form →'
+                )}
               </button>
-              <Link
-                href="/dashboard"
-                className="flex-1 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition text-center"
-              >
-                Cancel
+              <Link href="/dashboard">
+                <button
+                  type="button"
+                  style={{
+                    padding: '0.75rem 1.25rem',
+                    background: 'transparent',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '10px',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    transition: 'all 0.2s ease',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={e => { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = 'rgba(255,255,255,0.22)'; b.style.color = 'var(--text-primary)'; }}
+                  onMouseLeave={e => { const b = e.currentTarget as HTMLButtonElement; b.style.borderColor = 'rgba(255,255,255,0.12)'; b.style.color = 'var(--text-secondary)'; }}
+                >
+                  Cancel
+                </button>
               </Link>
             </div>
           </form>
-
-          <div className="mt-8 pt-8 border-t border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-4">Form Types</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 border border-gray-200 rounded-lg">
-                <p className="font-medium text-gray-900">📋 Survey</p>
-                <p className="text-sm text-gray-600 mt-1">Collect feedback and opinions</p>
-              </div>
-              <div className="p-4 border border-gray-200 rounded-lg">
-                <p className="font-medium text-gray-900">✍️ Registration</p>
-                <p className="text-sm text-gray-600 mt-1">Sign up forms and registrations</p>
-              </div>
-              <div className="p-4 border border-gray-200 rounded-lg">
-                <p className="font-medium text-gray-900">📬 Newsletter</p>
-                <p className="text-sm text-gray-600 mt-1">Email subscription forms</p>
-              </div>
-              <div className="p-4 border border-gray-200 rounded-lg">
-                <p className="font-medium text-gray-900">❓ Quiz</p>
-                <p className="text-sm text-gray-600 mt-1">Create engaging quizzes</p>
-              </div>
-            </div>
-          </div>
         </div>
+
+        {/* Footer note */}
+        <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '1.25rem' }}>
+          Forms are saved as drafts by default. Publish when ready to collect responses.
+        </p>
       </div>
     </div>
   );

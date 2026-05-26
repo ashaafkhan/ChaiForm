@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { router, publicProcedure, protectedProcedure } from '../init';
 import { users, socialAccounts } from '@chaiforms/db';
@@ -6,31 +7,34 @@ import crypto from 'crypto';
 
 export const oauthRouter = router({
   getOAuthUrl: publicProcedure
-    .input(z.object({
-      provider: z.enum(['google', 'github']),
-    }))
+    .input(z.object({ provider: z.enum(['google', 'github']) }))
     .query(({ input }) => {
       const state = crypto.randomBytes(32).toString('hex');
       const clientId = process.env[`${input.provider.toUpperCase()}_CLIENT_ID`];
 
       if (!clientId) {
-        throw new Error(`${input.provider} OAuth not configured`);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `${input.provider} OAuth is not configured on this server.`,
+        });
       }
 
       let authUrl = '';
+      const redirectUri = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/callback/${input.provider}`;
+
       if (input.provider === 'google') {
         authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
           client_id: clientId,
-          redirect_uri: `${process.env.NEXT_PUBLIC_API_URL}/auth/callback/${input.provider}`,
+          redirect_uri: redirectUri,
           response_type: 'code',
           scope: 'openid profile email',
           state,
           access_type: 'offline',
         }).toString()}`;
-      } else if (input.provider === 'github') {
+      } else {
         authUrl = `https://github.com/login/oauth/authorize?${new URLSearchParams({
           client_id: clientId,
-          redirect_uri: `${process.env.NEXT_PUBLIC_API_URL}/auth/callback/${input.provider}`,
+          redirect_uri: redirectUri,
           scope: 'user:email',
           state,
         }).toString()}`;
@@ -42,157 +46,137 @@ export const oauthRouter = router({
   handleCallback: publicProcedure
     .input(z.object({
       provider: z.enum(['google', 'github']),
-      code: z.string(),
-      state: z.string(),
+      code: z.string().min(1),
+      state: z.string().min(1),
     }))
     .mutation(async ({ ctx, input }) => {
       const { db } = ctx;
-      const clientId = process.env[`${input.provider.toUpperCase()}_CLIENT_ID`];
+      const clientId     = process.env[`${input.provider.toUpperCase()}_CLIENT_ID`];
       const clientSecret = process.env[`${input.provider.toUpperCase()}_CLIENT_SECRET`];
 
       if (!clientId || !clientSecret) {
-        throw new Error(`${input.provider} OAuth not configured`);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `${input.provider} OAuth is not configured on this server.`,
+        });
       }
 
       try {
+        const redirectUri = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/callback/${input.provider}`;
+
         // Exchange code for token
-        let tokenResponse;
+        let tokenResponse: Response;
         if (input.provider === 'google') {
           tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
-              code: input.code,
-              client_id: clientId,
-              client_secret: clientSecret,
-              redirect_uri: `${process.env.NEXT_PUBLIC_API_URL}/auth/callback/${input.provider}`,
-              grant_type: 'authorization_code',
+              code: input.code, client_id: clientId, client_secret: clientSecret,
+              redirect_uri: redirectUri, grant_type: 'authorization_code',
             }).toString(),
           });
-        } else if (input.provider === 'github') {
+        } else {
           tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              Accept: 'application/json',
-            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
             body: new URLSearchParams({
-              code: input.code,
-              client_id: clientId,
-              client_secret: clientSecret,
+              code: input.code, client_id: clientId, client_secret: clientSecret,
             }).toString(),
           });
         }
 
-        if (!tokenResponse || !tokenResponse.ok) {
-          throw new Error('Failed to exchange code for token');
+        if (!tokenResponse.ok) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to exchange OAuth code for token.' });
         }
 
-        const tokenData = await tokenResponse.json();
+        const tokenData = await tokenResponse.json() as { access_token: string; refresh_token?: string; expires_in?: number };
         const accessToken = tokenData.access_token;
 
-        // Get user info from provider
-        let userInfo;
+        // Fetch user profile from provider
+        let profile: { id?: string; sub?: string; email: string; name?: string; login?: string; picture?: string; avatar_url?: string };
         if (input.provider === 'google') {
-          const userResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          const r = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
-          userInfo = await userResponse.json();
-        } else if (input.provider === 'github') {
-          const userResponse = await fetch('https://api.github.com/user', {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              Accept: 'application/vnd.github.v3+json',
-            },
+          profile = await r.json();
+        } else {
+          const r = await fetch('https://api.github.com/user', {
+            headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/vnd.github.v3+json' },
           });
-          userInfo = await userResponse.json();
+          profile = await r.json();
         }
 
-        // Check if social account exists
-        const existingSocialAccount = await db.query.socialAccounts.findFirst({
-          where: and(
-            eq(socialAccounts.provider, input.provider),
-            eq(socialAccounts.providerAccountId, userInfo.id || userInfo.sub)
-          ),
-        });
+        const providerAccountId = String(profile.id || profile.sub);
+        const normalizedEmail   = profile.email?.toLowerCase()?.trim();
 
-        if (existingSocialAccount) {
-          // Account already linked, return user
-          return {
-            userId: existingSocialAccount.userId,
-            isNewUser: false,
-          };
+        if (!normalizedEmail) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'OAuth provider did not return an email address.' });
         }
 
-        // Check if user with this email exists
-        const existingUser = await db.query.users.findFirst({
-          where: eq(users.email, userInfo.email),
+        // Check if social account already linked
+        const existing = await db.query.socialAccounts.findFirst({
+          where: and(eq(socialAccounts.provider, input.provider), eq(socialAccounts.providerAccountId, providerAccountId)),
         });
+        if (existing) return { userId: existing.userId, isNewUser: false };
 
+        // Upsert user by email
         let userId: string;
+        const existingUser = await db.query.users.findFirst({
+          where: eq(users.email, normalizedEmail),
+          columns: { id: true },
+        });
+
         if (existingUser) {
           userId = existingUser.id;
         } else {
-          // Create new user
-          const newUser = await db.insert(users).values({
-            name: userInfo.name || userInfo.login || userInfo.email.split('@')[0],
-            email: userInfo.email,
-            avatarUrl: userInfo.picture || userInfo.avatar_url,
+          const [newUser] = await db.insert(users).values({
+            name: profile.name || profile.login || normalizedEmail.split('@')[0],
+            email: normalizedEmail,
+            avatarUrl: profile.picture || profile.avatar_url || null,
             isVerified: true,
             passwordHash: null,
           }).returning();
-          userId = newUser[0].id;
+          userId = newUser.id;
         }
 
         // Link social account
         await db.insert(socialAccounts).values({
           userId,
           provider: input.provider,
-          providerAccountId: userInfo.id || userInfo.sub,
-          email: userInfo.email,
-          name: userInfo.name || userInfo.login,
-          image: userInfo.picture || userInfo.avatar_url,
+          providerAccountId,
+          email: normalizedEmail,
+          name: profile.name || profile.login || null,
+          image: profile.picture || profile.avatar_url || null,
           accessToken,
-          refreshToken: tokenData.refresh_token,
+          refreshToken: tokenData.refresh_token || null,
           expiresAt: tokenData.expires_in ? new Date(Date.now() + tokenData.expires_in * 1000) : null,
         });
 
-        return {
-          userId,
-          isNewUser: !existingUser,
-        };
-      } catch (error) {
-        console.error('OAuth callback error:', error);
-        throw new Error('Failed to process OAuth callback');
+        return { userId, isNewUser: !existingUser };
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error('OAuth callback error:', err);
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'OAuth callback failed. Please try again.' });
       }
     }),
 
   getSocialAccounts: protectedProcedure
     .query(async ({ ctx }) => {
       const { db, userId } = ctx;
-
       const accounts = await db.query.socialAccounts.findMany({
-        where: eq(socialAccounts.userId, userId!),
+        where: eq(socialAccounts.userId, userId),
       });
-
-      return accounts.map(({ accessToken, refreshToken, ...rest }) => rest);
+      // Never expose tokens
+      return accounts.map(({ accessToken: _a, refreshToken: _r, ...safe }) => safe);
     }),
 
   unlinkSocialAccount: protectedProcedure
-    .input(z.object({
-      provider: z.enum(['google', 'github']),
-    }))
+    .input(z.object({ provider: z.enum(['google', 'github']) }))
     .mutation(async ({ ctx, input }) => {
       const { db, userId } = ctx;
-
-      await db.delete(socialAccounts)
-        .where(
-          and(
-            eq(socialAccounts.userId, userId!),
-            eq(socialAccounts.provider, input.provider)
-          )
-        );
-
+      await db.delete(socialAccounts).where(
+        and(eq(socialAccounts.userId, userId), eq(socialAccounts.provider, input.provider))
+      );
       return { success: true };
     }),
 });

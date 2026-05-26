@@ -1,4 +1,2 @@
-// tRPC types and utilities will be exported here
-// AppRouter type will be imported from apps/api
-
-export type AppRouter = any; // Will be properly typed once API is set up
+// Re-export the real AppRouter type from the API package
+export type { AppRouter } from '../../../apps/api/src/trpc/router';

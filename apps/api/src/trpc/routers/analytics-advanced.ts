@@ -1,3 +1,4 @@
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { router, protectedProcedure } from '../init';
 import { analyticsEvents, responses, forms, fields } from '@chaiforms/db';
@@ -18,7 +19,7 @@ export const analyticsAdvancedRouter = router({
       });
 
       if (!form) {
-        throw new Error('Form not found or you do not have access');
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found.' });
       }
 
       const startDate = new Date();
@@ -72,7 +73,7 @@ export const analyticsAdvancedRouter = router({
       });
 
       if (!form) {
-        throw new Error('Form not found or you do not have access');
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found.' });
       }
 
       const startDate = new Date();
@@ -147,7 +148,7 @@ export const analyticsAdvancedRouter = router({
       });
 
       if (!form) {
-        throw new Error('Form not found or you do not have access');
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found.' });
       }
 
       // Get form fields
@@ -204,7 +205,7 @@ export const analyticsAdvancedRouter = router({
       });
 
       if (!form) {
-        throw new Error('Form not found or you do not have access');
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found.' });
       }
 
       // Get all responses
@@ -255,7 +256,7 @@ export const analyticsAdvancedRouter = router({
       });
 
       if (!form) {
-        throw new Error('Form not found or you do not have access');
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found.' });
       }
 
       // Get all responses for this form
@@ -297,7 +298,7 @@ export const analyticsAdvancedRouter = router({
       });
 
       if (!form) {
-        throw new Error('Form not found or you do not have access');
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found.' });
       }
 
       const startDate = new Date();
@@ -353,3 +354,4 @@ export const analyticsAdvancedRouter = router({
       };
     }),
 });
+
