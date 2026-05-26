@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 
 
@@ -12,12 +13,12 @@ const FEATURES = [
 ];
 
 const THEMES = [
-  { name: 'The Matrix', category: 'Movies', color: '#00FF41', bg: '#0D0208' },
-  { name: 'Interstellar', category: 'Movies', color: '#F5A623', bg: '#0A0E1A' },
-  { name: 'Demon Slayer', category: 'Anime', color: '#E63946', bg: '#1B0A0A' },
-  { name: 'Cyberpunk', category: 'Anime', color: '#FF2D78', bg: '#0D0D0D' },
-  { name: 'Ocean Breeze', category: 'Nature', color: '#0EA5E9', bg: '#F0F9FF' },
-  { name: 'Midnight', category: 'Minimal', color: '#8B5CF6', bg: '#0F0F1A' },
+  { name: 'The Matrix', slug: 'the-matrix', category: 'Movies', color: '#00FF41', bg: '#0D0208' },
+  { name: 'Interstellar', slug: 'interstellar', category: 'Movies', color: '#F5A623', bg: '#0A0E1A' },
+  { name: 'Demon Slayer', slug: 'demon-slayer', category: 'Anime', color: '#E63946', bg: '#1B0A0A' },
+  { name: 'Cyberpunk', slug: 'cyberpunk', category: 'Anime', color: '#FF2D78', bg: '#0D0D0D' },
+  { name: 'Ocean Breeze', slug: 'ocean-breeze', category: 'Nature', color: '#0EA5E9', bg: '#F0F9FF' },
+  { name: 'Midnight', slug: 'midnight', category: 'Minimal', color: '#8B5CF6', bg: '#0F0F1A' },
 ];
 
 const STATS = [
@@ -28,6 +29,8 @@ const STATS = [
 ];
 
 export default function LandingPage() {
+  const [activeThemeSlug, setActiveThemeSlug] = useState('ocean-breeze');
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', fontFamily: 'Inter, sans-serif', overflowX: 'hidden' }}>
 
@@ -124,33 +127,349 @@ export default function LandingPage() {
 
       {/* Themes Showcase */}
       <section style={{ padding: '6rem 2rem', background: 'var(--bg-surface, #111118)' }}>
+        <style>{`
+          /* MATRIX MOCK STYLES */
+          .mock-form-theme-the-matrix {
+            background-color: #0D0208 !important;
+            background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                              linear-gradient(90deg, rgba(0, 255, 65, 0.03), rgba(0, 255, 65, 0.01), rgba(0, 255, 65, 0.03)) !important;
+            background-size: 100% 4px, 6px 100% !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            padding: 2rem !important;
+            border: 1px solid #00FF41 !important;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2) !important;
+            border-radius: 2px !important;
+            text-align: left;
+            transition: all 0.3s ease;
+          }
+          .mock-form-theme-the-matrix .mock-field-card {
+            background: rgba(13, 2, 8, 0.9) !important;
+            border: 1px solid #00FF41 !important;
+            border-radius: 2px !important;
+            box-shadow: 0 0 8px rgba(0, 255, 65, 0.15) !important;
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .mock-form-theme-the-matrix .mock-label {
+            color: #00FF41 !important;
+            text-shadow: 0 0 5px #00FF41 !important;
+          }
+          .mock-form-theme-the-matrix .mock-input {
+            width: 100%;
+            background: #000000 !important;
+            border: 1px solid #00AA2B !important;
+            color: #00FF41 !important;
+            border-radius: 2px !important;
+            padding: 0.5rem !important;
+            font-family: 'Courier New', Courier, monospace !important;
+          }
+          .mock-form-theme-the-matrix .mock-button {
+            background: #000000 !important;
+            border: 2px solid #00FF41 !important;
+            color: #00FF41 !important;
+            border-radius: 2px !important;
+            font-weight: 900 !important;
+            padding: 0.75rem !important;
+            cursor: pointer;
+            width: 100%;
+          }
+
+          /* CYBERPUNK MOCK STYLES */
+          .mock-form-theme-cyberpunk {
+            background-color: #0c0c0e !important;
+            background-image: 
+              linear-gradient(rgba(255, 45, 120, 0.05) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255, 45, 120, 0.05) 1px, transparent 1px) !important;
+            background-size: 20px 20px !important;
+            padding: 2rem !important;
+            border: 2px solid #ff2d78 !important;
+            box-shadow: 4px 4px 0px #00ffff !important;
+            border-radius: 0px !important;
+            text-align: left;
+            transition: all 0.3s ease;
+          }
+          .mock-form-theme-cyberpunk .mock-field-card {
+            background: #111115 !important;
+            border: 2px solid #ff2d78 !important;
+            border-radius: 0px !important;
+            box-shadow: 3px 3px 0px #00ffff !important;
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%) !important;
+          }
+          .mock-form-theme-cyberpunk .mock-label {
+            color: #00ffff !important;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.6) !important;
+          }
+          .mock-form-theme-cyberpunk .mock-input {
+            width: 100%;
+            background: #1a1a24 !important;
+            border: 1px solid #ff2d78 !important;
+            color: #ffffff !important;
+            border-radius: 0px !important;
+            padding: 0.5rem !important;
+          }
+          .mock-form-theme-cyberpunk .mock-button {
+            background: #ff2d78 !important;
+            border: none !important;
+            color: #ffffff !important;
+            border-radius: 0px !important;
+            font-weight: 800 !important;
+            padding: 0.75rem !important;
+            box-shadow: 3px 3px 0px #00ffff !important;
+            cursor: pointer;
+            width: 100%;
+          }
+
+          /* INTERSTELLAR MOCK STYLES */
+          .mock-form-theme-interstellar {
+            background-color: #060913 !important;
+            background-image: 
+              radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+              radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px) !important;
+            background-size: 250px 250px, 150px 150px !important;
+            padding: 2rem !important;
+            border: 1px solid rgba(245, 166, 35, 0.25) !important;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+            border-radius: 12px !important;
+            text-align: left;
+            transition: all 0.3s ease;
+          }
+          .mock-form-theme-interstellar .mock-field-card {
+            background: rgba(14, 18, 36, 0.75) !important;
+            border: 1px solid rgba(245, 166, 35, 0.2) !important;
+            border-radius: 8px !important;
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .mock-form-theme-interstellar .mock-label {
+            font-family: Georgia, serif !important;
+            color: #FFEED5 !important;
+          }
+          .mock-form-theme-interstellar .mock-input {
+            width: 100%;
+            background: rgba(10, 12, 22, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            color: #ffffff !important;
+            border-radius: 6px !important;
+            padding: 0.5rem !important;
+          }
+          .mock-form-theme-interstellar .mock-button {
+            background: linear-gradient(135deg, #F5A623, #b45309) !important;
+            color: #0a0a16 !important;
+            font-weight: 800 !important;
+            border-radius: 6px !important;
+            padding: 0.75rem !important;
+            cursor: pointer;
+            width: 100%;
+          }
+
+          /* DEMON SLAYER MOCK STYLES */
+          .mock-form-theme-demon-slayer {
+            background-color: #120505 !important;
+            background-image: radial-gradient(circle at 50% 10%, #300a0a, #120505) !important;
+            padding: 2rem !important;
+            border: 1px solid #E63946 !important;
+            box-shadow: 0 4px 20px rgba(230, 57, 70, 0.15) !important;
+            border-radius: 6px !important;
+            text-align: left;
+            transition: all 0.3s ease;
+          }
+          .mock-form-theme-demon-slayer .mock-field-card {
+            background: rgba(30, 12, 12, 0.9) !important;
+            border: 1px solid #E63946 !important;
+            border-radius: 6px !important;
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .mock-form-theme-demon-slayer .mock-label {
+            color: #ffdddd !important;
+            text-shadow: 0 0 5px rgba(230, 57, 70, 0.5) !important;
+          }
+          .mock-form-theme-demon-slayer .mock-input {
+            width: 100%;
+            background: #1b0a0a !important;
+            border: 1px solid #5a2020 !important;
+            color: #ffdddd !important;
+            border-radius: 6px !important;
+            padding: 0.5rem !important;
+          }
+          .mock-form-theme-demon-slayer .mock-button {
+            background: linear-gradient(135deg, #E63946, #FF9F1C, #E63946) !important;
+            color: #ffffff !important;
+            font-weight: 800 !important;
+            border-radius: 6px !important;
+            padding: 0.75rem !important;
+            cursor: pointer;
+            width: 100%;
+          }
+
+          /* OCEAN BREEZE MOCK STYLES */
+          .mock-form-theme-ocean-breeze {
+            background-color: #eef8fc !important;
+            background-image: radial-gradient(at 0% 0%, #dbf0f9 0px, transparent 50%) !important;
+            padding: 2rem !important;
+            border: 1px solid rgba(14, 165, 233, 0.15) !important;
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.05) !important;
+            border-radius: 20px !important;
+            text-align: left;
+            transition: all 0.3s ease;
+          }
+          .mock-form-theme-ocean-breeze .mock-field-card {
+            background: rgba(255, 255, 255, 0.85) !important;
+            border: 1px solid rgba(14, 165, 233, 0.1) !important;
+            border-radius: 16px !important;
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .mock-form-theme-ocean-breeze .mock-label {
+            color: #0f172a !important;
+          }
+          .mock-form-theme-ocean-breeze .mock-input {
+            width: 100%;
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            border-bottom: 3px solid #cbd5e1 !important;
+            color: #0f172a !important;
+            border-radius: 6px !important;
+            padding: 0.5rem !important;
+          }
+          .mock-form-theme-ocean-breeze .mock-button {
+            background: linear-gradient(135deg, #0EA5E9, #14B8A6) !important;
+            color: #ffffff !important;
+            border-radius: 24px !important;
+            font-weight: 700 !important;
+            padding: 0.75rem !important;
+            cursor: pointer;
+            width: 100%;
+          }
+
+          /* MIDNIGHT MOCK STYLES */
+          .mock-form-theme-midnight {
+            background-color: #080810 !important;
+            background-image: radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.12) 0px, transparent 50%) !important;
+            padding: 2rem !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 8px 32px 0 rgba(139, 92, 246, 0.08) !important;
+            border-radius: 14px !important;
+            text-align: left;
+            transition: all 0.3s ease;
+          }
+          .mock-form-theme-midnight .mock-field-card {
+            background: rgba(26, 26, 46, 0.45) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 10px !important;
+            padding: 1rem !important;
+            margin-bottom: 1rem !important;
+          }
+          .mock-form-theme-midnight .mock-label {
+            color: #f0f0ff !important;
+          }
+          .mock-form-theme-midnight .mock-input {
+            width: 100%;
+            background: rgba(15, 15, 30, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #f0f0ff !important;
+            border-radius: 8px !important;
+            padding: 0.5rem !important;
+          }
+          .mock-form-theme-midnight .mock-button {
+            background: linear-gradient(135deg, #8B5CF6, #6366f1) !important;
+            color: #ffffff !important;
+            border-radius: 10px !important;
+            font-weight: 700 !important;
+            padding: 0.75rem !important;
+            cursor: pointer;
+            width: 100%;
+          }
+        `}</style>
+
         <div style={{ maxWidth: '1100px', margin: '0 auto', textAlign: 'center' }}>
           <div className="badge badge-orange" style={{ marginBottom: '1rem', display: 'inline-flex' }}>🎨 Themes</div>
           <h2 style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', fontWeight: 800, fontFamily: 'Poppins, sans-serif', marginBottom: '1rem' }}>
             6 Stunning Themes
           </h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '3rem', fontSize: '1rem' }}>
-            From anime aesthetics to minimal dark — every form tells a story.
+            Click any theme card to preview its high-fidelity design instantly below!
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
-            {THEMES.map(theme => (
-              <div key={theme.name} style={{
-                padding: '1.5rem 1rem',
-                background: theme.bg,
-                borderRadius: '14px',
-                border: `1px solid ${theme.color}30`,
-                transition: 'all 0.25s ease',
-                cursor: 'pointer',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0 12px 32px ${theme.color}25`; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: theme.color, margin: '0 auto 0.875rem', boxShadow: `0 0 20px ${theme.color}60` }} />
-                <p style={{ fontWeight: 700, color: theme.color, fontSize: '0.9rem', fontFamily: 'Poppins, sans-serif' }}>{theme.name}</p>
-                <p style={{ fontSize: '0.75rem', color: theme.color + '99', marginTop: '0.2rem' }}>{theme.category}</p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '3rem' }}>
+            {/* Grid of clickable themes */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
+              {THEMES.map(theme => {
+                const isActive = activeThemeSlug === theme.slug;
+                return (
+                  <div key={theme.name}
+                    onClick={() => setActiveThemeSlug(theme.slug)}
+                    style={{
+                      padding: '1.5rem 1rem',
+                      background: theme.bg,
+                      borderRadius: '14px',
+                      border: isActive ? `3px solid ${theme.color}` : `1px solid ${theme.color}30`,
+                      boxShadow: isActive ? `0 0 25px ${theme.color}50` : 'none',
+                      transition: 'all 0.25s ease',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      transform: isActive ? 'scale(1.05)' : 'none',
+                    }}
+                    onMouseEnter={e => {
+                      if (!isActive) {
+                        (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)';
+                        (e.currentTarget as HTMLElement).style.boxShadow = `0 12px 32px ${theme.color}25`;
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!isActive) {
+                        (e.currentTarget as HTMLElement).style.transform = 'none';
+                        (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                      }
+                    }}
+                  >
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: theme.color, margin: '0 auto 0.875rem', boxShadow: `0 0 20px ${theme.color}60` }} />
+                    <p style={{ fontWeight: 700, color: theme.color, fontSize: '0.9rem', fontFamily: 'Poppins, sans-serif' }}>{theme.name}</p>
+                    <p style={{ fontSize: '0.75rem', color: theme.color + '99', marginTop: '0.2rem' }}>{theme.category}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Live interactive Mock Form Preview container */}
+            <div style={{ maxWidth: '640px', margin: '0 auto', width: '100%', minHeight: '380px', display: 'flex', flexDirection: 'column' }}>
+              <div className={`mock-form-theme-${activeThemeSlug}`}>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem', fontFamily: 'inherit' }} className="mock-label">
+                  Demo Survey — {THEMES.find(t => t.slug === activeThemeSlug)?.name}
+                </h3>
+                
+                <div className="mock-field-card">
+                  <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.5rem', fontFamily: 'inherit' }} className="mock-label">
+                    1. What is your preferred development environment?
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Neovim in Arch, VS Code in macOS..." 
+                    className="mock-input" 
+                    style={{ outline: 'none', transition: 'all 0.2s' }} 
+                    disabled 
+                  />
+                </div>
+
+                <div className="mock-field-card">
+                  <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.5rem', fontFamily: 'inherit' }} className="mock-label">
+                    2. Rate ChaiForms design style (1-5 stars)
+                  </label>
+                  <div style={{ display: 'flex', gap: '0.35rem', fontSize: '1.5rem' }}>
+                    {['⭐', '⭐', '⭐', '⭐', '⭐'].map((star, i) => (
+                      <span key={i} style={{ cursor: 'pointer' }}>{star}</span>
+                    ))}
+                  </div>
+                </div>
+
+                <button className="mock-button" style={{ display: 'block', textTransform: 'inherit', outline: 'none' }} onClick={() => alert('Thanks for trying the demo! Sign up to build your own forms.')}>
+                  Submit Answers
+                </button>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </section>
