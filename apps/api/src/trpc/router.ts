@@ -5,6 +5,7 @@ import { fieldsRouter } from './routers/fields';
 import { responsesRouter } from './routers/responses';
 import { analyticsRouter } from './routers/analytics';
 import { themesRouter } from './routers/themes';
+import { emailsRouter } from './routers/emails';
 
 export const appRouter = router({
   auth: authRouter,
@@ -13,6 +14,7 @@ export const appRouter = router({
   responses: responsesRouter,
   analytics: analyticsRouter,
   themes: themesRouter,
+  emails: emailsRouter,
 });
 
 export type AppRouter = typeof appRouter;

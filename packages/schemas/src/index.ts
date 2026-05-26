@@ -168,6 +168,48 @@ export const GetThemesSchema = z.object({
   offset: z.number().int().nonnegative().default(0),
 });
 
+// Email schemas
+export const EmailSettingsSchema = z.object({
+  notifyCreator: z.boolean().default(true),
+  notifyRespondent: z.boolean().default(false),
+  respondentEmailSubject: z.string().max(255).default('Thank you for your response'),
+  respondentEmailBody: z.string().max(5000).default('Thank you for submitting the form!'),
+  creatorEmailSubject: z.string().max(255).default('New form response received'),
+  creatorEmailBody: z.string().max(5000).default('You have received a new response to your form.'),
+  collectRespondentEmail: z.boolean().default(false),
+});
+
+export const UpdateEmailSettingsSchema = z.object({
+  formId: z.string().uuid(),
+  notifyCreator: z.boolean().optional(),
+  notifyRespondent: z.boolean().optional(),
+  respondentEmailSubject: z.string().max(255).optional(),
+  respondentEmailBody: z.string().max(5000).optional(),
+  creatorEmailSubject: z.string().max(255).optional(),
+  creatorEmailBody: z.string().max(5000).optional(),
+  collectRespondentEmail: z.boolean().optional(),
+});
+
+export const SendTestEmailSchema = z.object({
+  formId: z.string().uuid(),
+  email: z.string().email(),
+  type: z.enum(['respondent', 'creator']),
+});
+
+export const EmailTemplateSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1).max(255),
+  subject: z.string().max(255),
+  body: z.string().max(5000),
+  type: z.enum(['respondent', 'creator', 'welcome']),
+  tags: z.array(z.string()).optional(),
+});
+
+export type EmailSettings = z.infer<typeof EmailSettingsSchema>;
+export type UpdateEmailSettings = z.infer<typeof UpdateEmailSettingsSchema>;
+export type SendTestEmail = z.infer<typeof SendTestEmailSchema>;
+export type EmailTemplate = z.infer<typeof EmailTemplateSchema>;
+
 export type CreateForm = z.infer<typeof CreateFormSchema>;
 export type UpdateForm = z.infer<typeof UpdateFormSchema>;
 export type CreateField = z.infer<typeof CreateFieldSchema>;
