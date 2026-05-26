@@ -7,6 +7,8 @@ import { analyticsRouter } from './routers/analytics';
 import { analyticsAdvancedRouter } from './routers/analytics-advanced';
 import { themesRouter } from './routers/themes';
 import { emailsRouter } from './routers/emails';
+import { oauthRouter } from './routers/oauth';
+import { twoFactorRouter } from './routers/twofa';
 
 export const appRouter = router({
   auth: authRouter,
@@ -17,6 +19,8 @@ export const appRouter = router({
   analyticsAdvanced: analyticsAdvancedRouter,
   themes: themesRouter,
   emails: emailsRouter,
+  oauth: oauthRouter,
+  twoFactor: twoFactorRouter,
 });
 
 export type AppRouter = typeof appRouter;

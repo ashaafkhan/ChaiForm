@@ -45,14 +45,30 @@ export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull().unique(),
-  passwordHash: text('password_hash').notNull(),
+  passwordHash: text('password_hash'),
   avatarUrl: text('avatar_url'),
   isAdmin: boolean('is_admin').default(false).notNull(),
   isVerified: boolean('is_verified').default(false).notNull(),
   emailVerifiedAt: timestamp('email_verified_at'),
   plan: varchar('plan', { length: 50 }).default('free').notNull(),
+  twoFactorSecret: text('two_factor_secret'),
+  twoFactorEnabled: boolean('two_factor_enabled').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const socialAccounts = pgTable('social_accounts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  provider: varchar('provider', { length: 50 }).notNull(),
+  providerAccountId: varchar('provider_account_id', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }),
+  name: varchar('name', { length: 255 }),
+  image: text('image'),
+  accessToken: text('access_token'),
+  refreshToken: text('refresh_token'),
+  expiresAt: timestamp('expires_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 export const forms = pgTable('forms', {
@@ -146,6 +162,11 @@ export const analyticsEvents = pgTable('analytics_events', {
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   forms: many(forms),
+  socialAccounts: many(socialAccounts),
+}));
+
+export const socialAccountsRelations = relations(socialAccounts, ({ one }) => ({
+  user: one(users, { fields: [socialAccounts.userId], references: [users.id] }),
 }));
 
 export const formsRelations = relations(forms, ({ one, many }) => ({

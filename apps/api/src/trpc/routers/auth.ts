@@ -75,7 +75,7 @@ export const authRouter = router({
         where: eq(users.email, email),
       });
 
-      if (!user) {
+      if (!user || !user.passwordHash) {
         throw new Error('Invalid email or password');
       }
 
@@ -84,6 +84,27 @@ export const authRouter = router({
 
       if (!isPasswordValid) {
         throw new Error('Invalid email or password');
+      }
+
+      // Check if 2FA is enabled
+      if (user.twoFactorEnabled) {
+        // Return temporary session ID for 2FA verification
+        const tempToken = jwt.sign(
+          { userId: user.id, email: user.email, temp: true },
+          JWT_SECRET,
+          { expiresIn: '5m' }
+        );
+
+        return {
+          success: true,
+          requiresTwoFactor: true,
+          tempToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          },
+        };
       }
 
       // Generate JWT token
@@ -95,6 +116,7 @@ export const authRouter = router({
 
       return {
         success: true,
+        requiresTwoFactor: false,
         user: {
           id: user.id,
           email: user.email,
@@ -137,6 +159,64 @@ export const authRouter = router({
         };
       } catch {
         return null;
+      }
+    }),
+
+  verifyTwoFactorLogin: publicProcedure
+    .input(z.object({
+      tempToken: z.string(),
+      code: z.string().regex(/^\d{6}$/, 'Code must be 6 digits'),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { db } = ctx;
+      
+      try {
+        // Verify temp token
+        const decoded = jwt.verify(input.tempToken, JWT_SECRET) as JWTPayload & { temp?: boolean };
+        
+        if (!decoded.temp) {
+          throw new Error('Invalid temporary token');
+        }
+
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, decoded.userId),
+        });
+
+        if (!user || !user.twoFactorSecret) {
+          throw new Error('2FA not enabled for this user');
+        }
+
+        // Verify the 2FA code using speakeasy
+        const speakeasy = await import('speakeasy');
+        const isValid = speakeasy.totp.verify({
+          secret: user.twoFactorSecret,
+          encoding: 'base32',
+          token: input.code,
+          window: 2,
+        });
+
+        if (!isValid) {
+          throw new Error('Invalid 2FA code');
+        }
+
+        // Generate permanent JWT token
+        const token = jwt.sign(
+          { userId: user.id, email: user.email } as JWTPayload,
+          JWT_SECRET,
+          { expiresIn: JWT_EXPIRES_IN }
+        );
+
+        return {
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          },
+          token,
+        };
+      } catch (error) {
+        throw new Error('Failed to verify 2FA code');
       }
     }),
 

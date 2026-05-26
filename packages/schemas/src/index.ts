@@ -210,6 +210,61 @@ export type UpdateEmailSettings = z.infer<typeof UpdateEmailSettingsSchema>;
 export type SendTestEmail = z.infer<typeof SendTestEmailSchema>;
 export type EmailTemplate = z.infer<typeof EmailTemplateSchema>;
 
+// OAuth Schemas
+export const InitiateOAuthSchema = z.object({
+  provider: z.enum(['google', 'github']),
+  redirectUrl: z.string().url(),
+});
+
+export const OAuthCallbackSchema = z.object({
+  provider: z.enum(['google', 'github']),
+  code: z.string(),
+  state: z.string(),
+});
+
+export const LinkSocialAccountSchema = z.object({
+  provider: z.enum(['google', 'github']),
+  providerAccountId: z.string(),
+  email: z.string().email(),
+  name: z.string().optional(),
+  image: z.string().url().optional(),
+});
+
+// 2FA Schemas
+export const GenerateTwoFactorSecretSchema = z.object({
+  userId: z.string().uuid(),
+});
+
+export const VerifyTwoFactorSetupSchema = z.object({
+  userId: z.string().uuid(),
+  secret: z.string(),
+  code: z.string().regex(/^\d{6}$/, 'Code must be 6 digits'),
+});
+
+export const VerifyTwoFactorCodeSchema = z.object({
+  userId: z.string().uuid(),
+  code: z.string().regex(/^\d{6}$/, 'Code must be 6 digits'),
+});
+
+export const DisableTwoFactorSchema = z.object({
+  userId: z.string().uuid(),
+  code: z.string().regex(/^\d{6}$/, 'Code must be 6 digits'),
+});
+
+export const TwoFactorSessionSchema = z.object({
+  userId: z.string().uuid(),
+  expiresAt: z.date(),
+});
+
+export type InitiateOAuth = z.infer<typeof InitiateOAuthSchema>;
+export type OAuthCallback = z.infer<typeof OAuthCallbackSchema>;
+export type LinkSocialAccount = z.infer<typeof LinkSocialAccountSchema>;
+export type GenerateTwoFactorSecret = z.infer<typeof GenerateTwoFactorSecretSchema>;
+export type VerifyTwoFactorSetup = z.infer<typeof VerifyTwoFactorSetupSchema>;
+export type VerifyTwoFactorCode = z.infer<typeof VerifyTwoFactorCodeSchema>;
+export type DisableTwoFactor = z.infer<typeof DisableTwoFactorSchema>;
+export type TwoFactorSession = z.infer<typeof TwoFactorSessionSchema>;
+
 export type CreateForm = z.infer<typeof CreateFormSchema>;
 export type UpdateForm = z.infer<typeof UpdateFormSchema>;
 export type CreateField = z.infer<typeof CreateFieldSchema>;
