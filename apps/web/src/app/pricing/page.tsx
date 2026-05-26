@@ -1,10 +1,6 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Pricing | ChaiForms',
-  description: 'Simple, transparent pricing for ChaiForms. Start free and upgrade as you grow.',
-};
+import Link from 'next/link';
 
 const PLANS = [
   {

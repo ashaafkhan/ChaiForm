@@ -19,7 +19,7 @@ import {
   Cell,
 } from 'recharts';
 
-const COLORS = ['#f97316', '#f59e0b', '#10b981', '#8b5cf6', '#3b82f6', '#ec4899'];
+
 
 function StatBox({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
@@ -385,7 +385,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Field-level bar chart if metrics has field data */}
-        {metrics?.fieldMetrics && metrics.fieldMetrics.length > 0 && (
+        {(metrics as any)?.fieldMetrics && (metrics as any).fieldMetrics.length > 0 && (
           <div
             style={{
               padding: '1.5rem',
@@ -398,7 +398,7 @@ export default function AnalyticsPage() {
               📊 Field Completion Rates
             </h2>
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={metrics.fieldMetrics} layout="vertical">
+              <BarChart data={(metrics as any).fieldMetrics} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                 <XAxis
                   type="number"

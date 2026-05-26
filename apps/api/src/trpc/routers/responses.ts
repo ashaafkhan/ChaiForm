@@ -102,7 +102,6 @@ export const responsesRouter = router({
       const [response] = await db.insert(responses).values({
         formId: input.formId,
         respondentEmail: input.respondentEmail ?? null,
-        respondentName: input.respondentName ?? null,
         answers: input.answers,
         isComplete: true,
         ipAddress,
@@ -225,7 +224,7 @@ export const responsesRouter = router({
 
       const fieldLabels = form.fields.map((f: any) => f.label);
       const headers = [
-        'Response ID', 'Submitted At', 'Email', 'Name',
+        'Response ID', 'Submitted At', 'Email',
         'Completion Time (s)', 'IP Address',
         ...fieldLabels,
       ];
@@ -242,7 +241,6 @@ export const responsesRouter = router({
           r.id,
           r.submittedAt.toISOString(),
           r.respondentEmail ?? '',
-          r.respondentName ?? '',
           r.completionTimeSeconds ?? '',
           r.ipAddress ?? '',
           ...fieldValues,

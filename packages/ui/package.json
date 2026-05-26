@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Shared UI components",
   "private": true,
-  "main": "./src/index.ts",
+  "main": "./src/index.tsx",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.tsx"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

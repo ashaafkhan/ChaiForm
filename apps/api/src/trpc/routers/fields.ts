@@ -8,10 +8,11 @@ import { TRPCError } from '@trpc/server';
 const sanitize = (s: string) => s.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 
 const FieldTypeSchema = z.enum([
-  'short_text', 'long_text', 'email', 'number', 'phone',
-  'single_select', 'multi_select', 'dropdown', 'yes_no',
-  'rating', 'scale', 'date', 'time', 'file_upload',
-  'matrix', 'ranking', 'statement', 'page_break', 'signature',
+  'short_text', 'long_text', 'email', 'url', 'phone',
+  'number', 'rating', 'scale', 'single_select', 'multi_select',
+  'dropdown', 'checkbox', 'yes_no', 'date', 'time',
+  'date_range', 'file_upload', 'signature', 'matrix', 'ranking',
+  'statement', 'section_break',
 ]);
 
 const FieldOptionSchema = z.object({

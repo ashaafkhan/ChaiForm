@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Button } from '@chaiforms/ui/components/button';
-import { Card } from '@chaiforms/ui/components/card';
+import { Button, Card } from '@chaiforms/ui';
 import { Github, Chrome } from 'lucide-react';
 
 interface SocialLoginButtonsProps {

@@ -1,10 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button } from '@chaiforms/ui/components/button';
-import { Card } from '@chaiforms/ui/components/card';
-import { Input } from '@chaiforms/ui/components/input';
-import { Label } from '@chaiforms/ui/components/label';
+import { Button, Card, Input, Label } from '@chaiforms/ui';
 import { AlertCircle, Shield } from 'lucide-react';
 
 interface TwoFactorVerifyProps {
@@ -71,7 +68,7 @@ export const TwoFactorVerify: React.FC<TwoFactorVerifyProps> = ({
             maxLength={6}
             placeholder="000000"
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCode(e.target.value.replace(/\D/g, ''))}
             onKeyPress={handleKeyPress}
             className="font-mono text-center text-3xl tracking-widest mt-1 py-6"
             disabled={loading}

@@ -45,6 +45,42 @@ export const emailsRouter = router({
       return { success: true };
     }),
 
+  sendTestEmail: protectedProcedure
+    .input(z.object({
+      formId: z.string().uuid(),
+      email: z.string().email(),
+      type: z.enum(['respondent', 'creator']),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const form = await db.query.forms.findFirst({ where: eq(forms.id, input.formId) });
+      if (!form) throw new TRPCError({ code: 'NOT_FOUND', message: 'Form not found' });
+      if (form.userId !== ctx.userId) throw new TRPCError({ code: 'FORBIDDEN', message: 'Access denied' });
+
+      const settings = (form.settings as any) || {};
+      const { sendEmail, getRespondentEmailHtml, getCreatorEmailHtml } = await import('@chaiforms/email');
+
+      let html = '';
+      let subject = '';
+
+      if (input.type === 'respondent') {
+        subject = settings.respondentEmailSubject || 'Thank you for your response';
+        const body = settings.respondentEmailBody || 'Thank you for submitting the form!';
+        html = getRespondentEmailHtml({ formTitle: form.title, message: body });
+      } else {
+        subject = settings.creatorEmailSubject || 'New form response received';
+        const body = settings.creatorEmailBody || 'You have received a new response.';
+        html = getCreatorEmailHtml({ formTitle: form.title, message: body, responseCount: form.responseCount || 0 });
+      }
+
+      await sendEmail({
+        to: input.email,
+        subject: `[TEST] ${subject}`,
+        html,
+      });
+
+      return { success: true };
+    }),
+
   getSampleTags: protectedProcedure.query(() => {
     return [
       { tag: '{form_title}', description: 'Form title' },

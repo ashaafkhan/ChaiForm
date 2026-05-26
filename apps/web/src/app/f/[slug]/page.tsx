@@ -148,22 +148,28 @@ export default function PublicFormPage() {
       formId: form!.id,
       answers: answers as any,
       completionTimeSeconds: completionTime,
-      sessionId: sessionId.current,
+      metadata: { sessionId: sessionId.current },
     });
   };
 
-  // Theme from form
+  // Theme and custom override resolving
   const theme = (form?.theme as any) || {};
-  const colors = theme.colors || {};
-  const typography = theme.typography || {};
-  const bg = colors.background || '#0a0a0f';
-  const surface = colors.surface || '#16161f';
-  const text = colors.text || '#f0f0ff';
-  const textMuted = colors.textMuted || '#9090b0';
-  const primary = colors.primary || '#f97316';
-  const borderColor = colors.border || 'rgba(255,255,255,0.12)';
-  const fontFamily = typography.fontFamily || 'Inter, sans-serif';
-  const radius = theme.borderRadius || '10px';
+  const themeConfig = theme.config || {};
+  const themeColors = themeConfig.colors || {};
+  const themeTypography = themeConfig.typography || {};
+  const custom = (form?.customTheme as any) || {};
+
+  const bg = custom.backgroundColor || themeColors.background || '#0a0a0f';
+  const surface = custom.surfaceColor || themeColors.surface || '#16161f';
+  const text = custom.textColor || themeColors.text || '#f0f0ff';
+  const textMuted = custom.textMutedColor || themeColors.textMuted || '#9090b0';
+  const primary = custom.primaryColor || themeColors.primary || '#f97316';
+  const accent = custom.accentColor || themeColors.accent || '#f59e0b';
+  const borderColor = custom.borderColor || themeColors.border || 'rgba(255,255,255,0.12)';
+  const fontFamily = custom.fontFamily || themeTypography.fontFamily || 'Inter, sans-serif';
+  const radiusMap: Record<string, string> = { none: '0px', sm: '4px', md: '8px', lg: '12px' };
+  const customRadius = custom.borderRadius ? (radiusMap[custom.borderRadius] || custom.borderRadius) : undefined;
+  const radius = customRadius || themeConfig.borderRadius || '10px';
 
   // ─── Loading ─────────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -730,7 +736,7 @@ export default function PublicFormPage() {
                 style={{
                   height: '100%',
                   width: `${progress}%`,
-                  background: `linear-gradient(90deg, ${primary}, ${colors.accent || '#f59e0b'})`,
+                  background: `linear-gradient(90deg, ${primary}, ${accent})`,
                   borderRadius: '2px',
                   transition: 'width 0.5s ease',
                 }}
@@ -825,7 +831,7 @@ export default function PublicFormPage() {
               padding: '1rem 2rem',
               background: isSubmitting
                 ? 'rgba(249,115,22,0.5)'
-                : `linear-gradient(135deg, ${primary}, ${colors.accent || '#f59e0b'})`,
+                : `linear-gradient(135deg, ${primary}, ${accent})`,
               color: '#fff',
               border: 'none',
               borderRadius: radius,

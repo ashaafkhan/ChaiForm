@@ -1,11 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Card } from '@chaiforms/ui/components/card';
-import { Label } from '@chaiforms/ui/components/label';
-import { Input } from '@chaiforms/ui/components/input';
-import { Button } from '@chaiforms/ui/components/button';
-import { Switch } from '@chaiforms/ui/components/switch';
+import { Card, Label, Input, Button, Switch } from '@chaiforms/ui';
 import { Mail } from 'lucide-react';
 
 export interface EmailSettings {
@@ -46,7 +42,7 @@ export const EmailSettingsForm: React.FC<EmailSettingsFormProps> = ({
           </div>
           <Switch
             checked={settings.notifyRespondent}
-            onCheckedChange={(checked) => onUpdate({ notifyRespondent: checked })}
+            onCheckedChange={(checked: boolean) => onUpdate({ notifyRespondent: checked })}
           />
         </div>
 
@@ -105,7 +101,7 @@ export const EmailSettingsForm: React.FC<EmailSettingsFormProps> = ({
           </div>
           <Switch
             checked={settings.notifyCreator}
-            onCheckedChange={(checked) => onUpdate({ notifyCreator: checked })}
+            onCheckedChange={(checked: boolean) => onUpdate({ notifyCreator: checked })}
           />
         </div>
 
@@ -150,7 +146,7 @@ export const EmailSettingsForm: React.FC<EmailSettingsFormProps> = ({
                   id="test-email"
                   type="email"
                   value={testEmail}
-                  onChange={(e) => setTestEmail(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTestEmail(e.target.value)}
                   placeholder="your@email.com"
                 />
                 <Button
@@ -176,7 +172,7 @@ export const EmailSettingsForm: React.FC<EmailSettingsFormProps> = ({
           </label>
           <Switch
             checked={settings.collectRespondentEmail}
-            onCheckedChange={(checked) => onUpdate({ collectRespondentEmail: checked })}
+            onCheckedChange={(checked: boolean) => onUpdate({ collectRespondentEmail: checked })}
           />
         </div>
         <p className="text-xs text-blue-800 mt-2">

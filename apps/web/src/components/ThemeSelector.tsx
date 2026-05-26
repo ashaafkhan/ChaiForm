@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card } from '@chaiforms/ui/components/card';
-import { Button } from '@chaiforms/ui/components/button';
+import React from 'react';
+import { Card } from '@chaiforms/ui';
 import { Check } from 'lucide-react';
 
 interface Theme {

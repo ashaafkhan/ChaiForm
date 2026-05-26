@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Button } from '@chaiforms/ui/components/button';
-import { Card } from '@chaiforms/ui/components/card';
+import { Button, Card } from '@chaiforms/ui';
 import { ChevronLeft, Search } from 'lucide-react';
 import { ThemeSelector } from '@/components/ThemeSelector';
+import { trpc } from '@/lib/trpc';
 
 interface Theme {
   id: string;
@@ -29,33 +29,16 @@ interface Theme {
 }
 
 export default function ThemesPage() {
-  const [themes, setThemes] = useState<Theme[]>([]);
-  const [filteredThemes, setFilteredThemes] = useState<Theme[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedThemeId, setSelectedThemeId] = useState<string>();
 
+  const { data: themesData, isLoading } = trpc.themes.list.useQuery({});
+  const themes = (themesData || []) as unknown as Theme[];
+
+  const [filteredThemes, setFilteredThemes] = useState<Theme[]>([]);
+
   const categories = Array.from(new Set(themes.map((t) => t.category).filter(Boolean)));
-
-  // Load themes on mount
-  useEffect(() => {
-    const loadThemes = async () => {
-      try {
-        setIsLoading(true);
-        // TODO: Load themes from tRPC
-        // const themes = await trpc.themes.list.query({});
-        // setThemes(themes);
-        console.log('Loading themes...');
-      } catch (error) {
-        console.error('Failed to load themes:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadThemes();
-  }, []);
 
   // Filter themes
   useEffect(() => {

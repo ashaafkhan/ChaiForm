@@ -34,9 +34,7 @@ app.all('/trpc/:path*', async (c) => {
 app.get('/docs', apiReference({
   theme: 'deepSpace',
   spec: {
-    title: 'ChaiForms API',
-    version: '1.0.0',
-    openApiUrl: '/openapi.json',
+    url: '/openapi.json',
   },
 }));
 

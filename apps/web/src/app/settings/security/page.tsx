@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Button } from '@chaiforms/ui/components/button';
-import { Card } from '@chaiforms/ui/components/card';
-import { SocialAccounts, SocialLoginButtons } from '@/components/SocialLogin';
+import { Button, Card } from '@chaiforms/ui';
+import { SocialAccounts } from '@/components/SocialLogin';
 import { TwoFactorSetup } from '@/components/TwoFactorSetup';
 import { ChevronLeft, Shield, Smartphone, Lock } from 'lucide-react';
+import { trpc } from '@/lib/trpc';
 
 interface SecuritySettingsState {
   twoFactorEnabled: boolean;
@@ -30,52 +30,53 @@ export default function SecuritySettingsPage() {
     showTwoFactorSetupModal: false,
   });
 
+  const { data: twoFactorStatus, isLoading: isTwoFactorLoading, refetch: refetch2FA } = trpc.twoFactor.getStatus.useQuery(undefined);
+  const { data: socialAccounts, isLoading: isSocialLoading, refetch: refetchSocial } = trpc.oauth.getSocialAccounts.useQuery(undefined);
+
+  const setup2FAMutation = trpc.twoFactor.setup.useMutation();
+  const verify2FAMutation = trpc.twoFactor.verify.useMutation({
+    onSuccess: () => {
+      refetch2FA();
+      setState(prev => ({ ...prev, twoFactorEnabled: true, showTwoFactorSetupModal: false }));
+    }
+  });
+  const disable2FAMutation = trpc.twoFactor.disable.useMutation({
+    onSuccess: () => {
+      refetch2FA();
+      setState(prev => ({ ...prev, twoFactorEnabled: false }));
+    }
+  });
+  const unlinkSocialMutation = trpc.oauth.unlinkSocialAccount.useMutation({
+    onSuccess: () => {
+      refetchSocial();
+    }
+  });
+
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        // TODO: Load security settings from tRPC
-        // const twoFactorStatus = await trpc.twoFactor.getTwoFactorStatus.query();
-        // const socialAccounts = await trpc.oauth.getSocialAccounts.query();
-        
-        // For now, mock the data
-        setState(prev => ({
-          ...prev,
-          twoFactorEnabled: false,
-          socialAccounts: [],
-          isLoading: false,
-        }));
-
-        console.log('Security settings loaded');
-      } catch (error) {
-        console.error('Failed to load security settings:', error);
-        setState(prev => ({ ...prev, isLoading: false }));
-      }
-    };
-
-    loadSettings();
-  }, []);
+    const isL = isTwoFactorLoading || isSocialLoading;
+    setState(prev => ({
+      ...prev,
+      twoFactorEnabled: twoFactorStatus?.enabled ?? false,
+      socialAccounts: (socialAccounts || []) as any,
+      isLoading: isL,
+    }));
+  }, [twoFactorStatus, socialAccounts, isTwoFactorLoading, isSocialLoading]);
 
   const handleTwoFactorSetup = async () => {
-    // TODO: Call tRPC endpoint to generate secret
-    return { secret: 'TEST_SECRET_BASE32', qrCode: 'data:image/png;base64,...' };
+    const res = await setup2FAMutation.mutateAsync();
+    return { secret: res.secret, qrCode: res.qrCode };
   };
 
   const handleTwoFactorVerify = async (secret: string, code: string) => {
-    // TODO: Call tRPC endpoint to verify and save
-    setState(prev => ({ ...prev, twoFactorEnabled: true, showTwoFactorSetupModal: false }));
+    await verify2FAMutation.mutateAsync({ secret, code });
   };
 
   const handleDisableTwoFactor = async () => {
-    // TODO: Call tRPC endpoint to disable
-    setState(prev => ({ ...prev, twoFactorEnabled: false }));
+    await disable2FAMutation.mutateAsync();
   };
 
   const handleUnlinkSocial = async (provider: 'google' | 'github') => {
-    // TODO: Call tRPC endpoint to unlink
-    setState(prev => ({
-      ...prev,
-      socialAccounts: prev.socialAccounts.filter(a => a.provider !== provider),
-    }));
+    await unlinkSocialMutation.mutateAsync({ provider });
   };
 
   return (

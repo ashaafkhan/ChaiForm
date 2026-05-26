@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Card } from '@chaiforms/ui/components/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@chaiforms/ui/components/tabs';
+import { Card, Tabs, TabsContent, TabsList, TabsTrigger } from '@chaiforms/ui';
 
 interface EmailPreviewProps {
   respondentSubject: string;

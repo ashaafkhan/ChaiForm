@@ -1,10 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card } from '@chaiforms/ui/components/card';
-import { Button } from '@chaiforms/ui/components/button';
-import { Input } from '@chaiforms/ui/components/input';
-import { Label } from '@chaiforms/ui/components/label';
+import { Card, Button, Input, Label } from '@chaiforms/ui';
 import { Eye, EyeOff } from 'lucide-react';
 
 export interface Field {
@@ -137,9 +134,9 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
                   id={`${field.id}-${option}`}
                   value={option}
                   onChange={(e) => {
-                    const current = Array.isArray(formData[field.id])
+                    const current = (Array.isArray(formData[field.id])
                       ? formData[field.id]
-                      : [];
+                      : []) as string[];
                     if (e.target.checked) {
                       handleInputChange(field.id, [...current, option]);
                     } else {

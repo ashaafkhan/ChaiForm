@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { router, publicProcedure, protectedProcedure } from '../init';
 import { forms, fields } from '@chaiforms/db';
-import { eq, and, desc, ilike } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
 // ─── Zod Schemas ─────────────────────────────────────────────────────────────

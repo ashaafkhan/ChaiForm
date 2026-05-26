@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-import { Button } from '@chaiforms/ui/components/button';
-import { Card } from '@chaiforms/ui/components/card';
+import { Button, Card } from '@chaiforms/ui';
 import { Trash2, Copy, Settings, Plus } from 'lucide-react';
 
 export interface Field {
@@ -42,9 +41,9 @@ const FIELD_TYPES = [
 
 export const FieldEditor: React.FC<FieldEditorProps> = ({
   fields,
-  formId,
+  formId: _formId,
   onFieldAdd,
-  onFieldUpdate,
+  onFieldUpdate: _onFieldUpdate,
   onFieldDelete,
   onFieldReorder,
   onFieldDuplicate,
@@ -149,7 +148,7 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={(e) => {
+                                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                   e.stopPropagation();
                                   onFieldDuplicate(field.id);
                                 }}
@@ -160,7 +159,7 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={(e) => {
+                                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                   e.stopPropagation();
                                   onSelectField(field.id);
                                 }}
@@ -171,7 +170,7 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={(e) => {
+                                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                   e.stopPropagation();
                                   onFieldDelete(field.id);
                                 }}

@@ -25,8 +25,13 @@ export default function ResponsesPage() {
     onSuccess: () => { showToast('Response deleted'); refetch(); setSelectedResponse(null); },
   });
 
-  const exportMutation = trpc.responses.exportCsv.useMutation({
-    onSuccess: (data) => {
+  const utils = trpc.useUtils();
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const data = await utils.responses.exportCsv.fetch({ formId });
       const blob = new Blob([data.csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -35,8 +40,13 @@ export default function ResponsesPage() {
       a.click();
       URL.revokeObjectURL(url);
       showToast('CSV exported!');
-    },
-  });
+    } catch (err) {
+      console.error(err);
+      showToast('Export failed');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const s = {
     base: 'var(--bg-base)',
@@ -82,10 +92,10 @@ export default function ResponsesPage() {
           <button
             className="btn-primary"
             style={{ fontSize: '0.8125rem', padding: '0.375rem 0.875rem' }}
-            onClick={() => exportMutation.mutate({ formId })}
-            disabled={exportMutation.isPending}
+            onClick={handleExport}
+            disabled={isExporting}
           >
-            {exportMutation.isPending ? 'Exporting...' : '⬇ Export CSV'}
+            {isExporting ? 'Exporting...' : '⬇ Export CSV'}
           </button>
         </div>
       </header>

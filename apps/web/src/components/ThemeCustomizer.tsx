@@ -1,10 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Card } from '@chaiforms/ui/components/card';
-import { Label } from '@chaiforms/ui/components/label';
-import { Input } from '@chaiforms/ui/components/input';
-import { Button } from '@chaiforms/ui/components/button';
+import { Card, Label, Input, Button } from '@chaiforms/ui';
 import { X } from 'lucide-react';
 
 export interface ThemeConfig {
@@ -103,13 +100,13 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({
                   id={key}
                   type="color"
                   value={config[key as keyof ThemeConfig]}
-                  onChange={(e) => handleColorChange(key, e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleColorChange(key, e.target.value)}
                   className="w-12 h-10 rounded-lg cursor-pointer border border-slate-300"
                 />
                 <Input
                   type="text"
                   value={config[key as keyof ThemeConfig]}
-                  onChange={(e) => handleColorChange(key, e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleColorChange(key, e.target.value)}
                   placeholder="#000000"
                   className="flex-1"
                 />

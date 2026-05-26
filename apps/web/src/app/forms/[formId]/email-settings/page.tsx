@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Button } from '@chaiforms/ui/components/button';
-import { Card } from '@chaiforms/ui/components/card';
+import { Button } from '@chaiforms/ui';
 import { EmailSettingsForm } from '@/components/EmailSettingsForm';
 import { EmailPreview } from '@/components/EmailPreview';
 import { ChevronLeft, Mail } from 'lucide-react';
+import { trpc } from '@/lib/trpc';
 
 interface EmailSettings {
   notifyCreator: boolean;
@@ -37,21 +37,29 @@ export default function EmailSettingsPage() {
   const [isSending, setIsSending] = useState(false);
   const [formTitle, setFormTitle] = useState('My Form');
 
+  const { data: emailSettings, refetch } = trpc.emails.getSettings.useQuery({ formId });
+  const { data: form } = trpc.forms.getById.useQuery({ formId });
+
+  const saveMutation = trpc.emails.updateSettings.useMutation({
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const sendTestMutation = trpc.emails.sendTestEmail.useMutation();
+
   // Load settings on mount
   React.useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        // TODO: Load email settings from tRPC
-        // const emailSettings = await trpc.emails.getSettings.query({ formId });
-        // setSettings(emailSettings);
-        console.log('Loading email settings for form:', formId);
-      } catch (error) {
-        console.error('Failed to load email settings:', error);
-      }
-    };
+    if (emailSettings) {
+      setSettings(emailSettings);
+    }
+  }, [emailSettings]);
 
-    loadSettings();
-  }, [formId]);
+  React.useEffect(() => {
+    if (form) {
+      setFormTitle(form.title);
+    }
+  }, [form]);
 
   const handleUpdateSettings = (updates: Partial<EmailSettings>) => {
     setSettings((prev) => ({ ...prev, ...updates }));
@@ -60,14 +68,14 @@ export default function EmailSettingsPage() {
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
-      // TODO: Save email settings to tRPC
-      // await trpc.emails.updateSettings.mutate({
-      //   formId,
-      //   ...settings,
-      // });
-      console.log('Email settings saved:', settings);
+      await saveMutation.mutateAsync({
+        formId,
+        ...settings,
+      });
+      alert('Email settings saved successfully! ✓');
     } catch (error) {
       console.error('Failed to save email settings:', error);
+      alert(error instanceof Error ? error.message : 'Failed to save settings');
     } finally {
       setIsSaving(false);
     }
@@ -76,15 +84,15 @@ export default function EmailSettingsPage() {
   const handleSendTestEmail = async (type: 'respondent' | 'creator', email: string) => {
     setIsSending(true);
     try {
-      // TODO: Send test email
-      // await trpc.emails.sendTestEmail.mutate({
-      //   formId,
-      //   email,
-      //   type,
-      // });
-      console.log(`Test ${type} email sent to ${email}`);
+      await sendTestMutation.mutateAsync({
+        formId,
+        email,
+        type,
+      });
+      alert(`Test ${type} email sent successfully to ${email}! ✓`);
     } catch (error) {
       console.error('Failed to send test email:', error);
+      alert(error instanceof Error ? error.message : 'Failed to send test email');
     } finally {
       setIsSending(false);
     }

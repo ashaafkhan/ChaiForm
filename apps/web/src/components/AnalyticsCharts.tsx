@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Card } from '@chaiforms/ui/components/card';
+import { Card } from '@chaiforms/ui';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface ResponseTrendChartProps {

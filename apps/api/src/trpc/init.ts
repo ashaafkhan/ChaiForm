@@ -18,14 +18,15 @@ const loggerMiddleware = t.middleware(async ({ path, type, next }) => {
 
 // ─── Middleware: Input Sanitizer ──────────────────────────────────────────────
 // Strips any prototype-polluting keys from raw input
-const sanitizerMiddleware = t.middleware(async ({ rawInput, next }) => {
+const sanitizerMiddleware = t.middleware(async (opts) => {
+  const rawInput = (opts as any).rawInput;
   if (rawInput && typeof rawInput === 'object' && !Array.isArray(rawInput)) {
     const dangerous = ['__proto__', 'constructor', 'prototype'];
     for (const key of dangerous) {
       delete (rawInput as Record<string, unknown>)[key];
     }
   }
-  return next();
+  return opts.next();
 });
 
 // ─── Middleware: Auth Guard ───────────────────────────────────────────────────

@@ -5,8 +5,7 @@ import { createTRPCReact, httpBatchLink } from '@trpc/react-query';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getToken } from './auth';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AppRouter = any;
+import type { AppRouter } from '@chaiforms/trpc';
 
 export const trpc = createTRPCReact<AppRouter>();
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { trpc } from '@/lib/trpc';
@@ -26,7 +26,12 @@ const FIELD_TYPES = [
   { type: 'section_break', label: 'Section Break', icon: '—', group: 'Layout' },
 ] as const;
 
-type FieldType = typeof FIELD_TYPES[number]['type'];
+type FieldType =
+  | 'short_text' | 'long_text' | 'email' | 'url' | 'phone'
+  | 'number' | 'rating' | 'scale' | 'single_select' | 'multi_select'
+  | 'dropdown' | 'checkbox' | 'yes_no' | 'date' | 'time'
+  | 'date_range' | 'file_upload' | 'signature' | 'matrix' | 'ranking'
+  | 'statement' | 'section_break';
 
 interface FieldOption { id: string; label: string; value: string; }
 interface Field {
@@ -82,18 +87,18 @@ export default function FormEditorPage() {
     if (!u) router.push('/login');
   }, [router]);
 
-  const { data: formData } = trpc.forms.getById.useQuery({ formId }, {
-    onSuccess: (data: any) => {
-      if (!mounted.current) {
-        setFormTitle(data.title);
-        setFormDesc(data.description || '');
-        setFormSlug(data.slug);
-        setFields([...(data.fields || [])].sort((a: Field, b: Field) => a.order - b.order));
-        setIsPublished(data.status === 'published');
-        mounted.current = true;
-      }
-    },
-  });
+  const { data: queryData } = trpc.forms.getById.useQuery({ formId });
+
+  useEffect(() => {
+    if (queryData && !mounted.current) {
+      setFormTitle(queryData.title);
+      setFormDesc(queryData.description || '');
+      setFormSlug(queryData.slug);
+      setFields([...((queryData.fields as any) || [])].sort((a: Field, b: Field) => a.order - b.order));
+      setIsPublished(queryData.status === 'published');
+      mounted.current = true;
+    }
+  }, [queryData]);
 
   const updateMutation = trpc.forms.update.useMutation({ onSuccess: () => setSaveStatus('saved') });
   const createFieldMutation = trpc.fields.create.useMutation({
@@ -131,7 +136,7 @@ export default function FormEditorPage() {
     createFieldMutation.mutate({
       formId, type: type as any,
       label: `${info.label} Question`,
-      order: fields.length, page: 1, isRequired: false,
+      page: 1, isRequired: false,
       options: defaultOptions.length ? defaultOptions : undefined,
     });
   };
@@ -157,7 +162,7 @@ export default function FormEditorPage() {
   };
 
   const selectedField = fields.find(f => f.id === selectedId) || null;
-  const groupedFields = GROUPS.map(g => ({ group: g, types: FIELD_TYPES.filter(f => f.group === g) }));
+  // groupedFields unused and removed
 
   return (
     <div style={{ minHeight: '100vh', background: S.base, display: 'flex', flexDirection: 'column', fontFamily: 'Inter, sans-serif' }}>

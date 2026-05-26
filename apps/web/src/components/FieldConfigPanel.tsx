@@ -1,11 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Card } from '@chaiforms/ui/components/card';
-import { Button } from '@chaiforms/ui/components/button';
-import { Input } from '@chaiforms/ui/components/input';
-import { Label } from '@chaiforms/ui/components/label';
-import { Switch } from '@chaiforms/ui/components/switch';
+import { Card, Button, Input, Label, Switch } from '@chaiforms/ui';
 import { X } from 'lucide-react';
 
 export interface Field {
