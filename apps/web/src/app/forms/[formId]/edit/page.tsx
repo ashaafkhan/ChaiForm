@@ -1,127 +1,247 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { Button } from '@chaiforms/ui/components/button';
+import { Input } from '@chaiforms/ui/components/input';
+import { Card } from '@chaiforms/ui/components/card';
+import { FieldEditor } from '@/components/FieldEditor';
+import { FieldConfigPanel } from '@/components/FieldConfigPanel';
+import { FormPreview } from '@/components/FormPreview';
+import { ChevronLeft, Save } from 'lucide-react';
+
+interface Field {
+  id: string;
+  formId: string;
+  fieldType: 'text' | 'email' | 'number' | 'date' | 'select' | 'checkbox' | 'radio' | 'textarea';
+  label: string;
+  placeholder?: string;
+  required: boolean;
+  order: number;
+  options?: string[];
+}
 
 export default function FormEditorPage() {
   const params = useParams();
   const formId = params.formId as string;
-  const [fields, setFields] = useState<any[]>([]);
-  const [formTitle, setFormTitle] = useState('Untitled Form');
-  const [published, setPublished] = useState(false);
 
-  const handleAddField = () => {
-    const newField = {
+  const [formTitle, setFormTitle] = useState('Untitled Form');
+  const [formDescription, setFormDescription] = useState('');
+  const [fields, setFields] = useState<Field[]>([]);
+  const [selectedFieldId, setSelectedFieldId] = useState<string | undefined>();
+  const [isPublished, setIsPublished] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Load form data on mount
+  useEffect(() => {
+    const loadForm = async () => {
+      try {
+        // TODO: Fetch form data from API using tRPC
+        // const form = await trpc.forms.getById.query({ id: formId });
+        // setFormTitle(form.title);
+        // setFormDescription(form.description);
+        // setFields(form.fields);
+        // setIsPublished(form.status === 'published');
+      } catch (error) {
+        console.error('Failed to load form:', error);
+      }
+    };
+
+    loadForm();
+  }, [formId]);
+
+  const handleAddField = (fieldType: string) => {
+    const newField: Field = {
       id: `field-${Date.now()}`,
-      type: 'short_text',
-      label: 'New Field',
-      order: fields.length + 1,
+      formId,
+      fieldType: fieldType as Field['fieldType'],
+      label: `${fieldType.charAt(0).toUpperCase() + fieldType.slice(1)} Field`,
+      placeholder: '',
+      required: false,
+      order: fields.length,
+      options: ['text', 'textarea', 'email', 'number', 'date'].includes(fieldType)
+        ? undefined
+        : [],
     };
     setFields([...fields, newField]);
+    setSelectedFieldId(newField.id);
+  };
+
+  const handleUpdateField = (fieldId: string, updates: Partial<Field>) => {
+    setFields(
+      fields.map((field) => (field.id === fieldId ? { ...field, ...updates } : field)),
+    );
   };
 
   const handleDeleteField = (fieldId: string) => {
-    setFields(fields.filter(f => f.id !== fieldId));
+    setFields(fields.filter((f) => f.id !== fieldId));
+    if (selectedFieldId === fieldId) {
+      setSelectedFieldId(undefined);
+    }
   };
 
-  const handlePublish = () => {
-    setPublished(!published);
-    // Call API to publish form
+  const handleReorderFields = (reorderedFields: Field[]) => {
+    setFields(reorderedFields);
   };
+
+  const handleDuplicateField = async (fieldId: string) => {
+    const fieldToDuplicate = fields.find((f) => f.id === fieldId);
+    if (!fieldToDuplicate) return;
+
+    const duplicatedField: Field = {
+      ...fieldToDuplicate,
+      id: `field-${Date.now()}`,
+      label: `${fieldToDuplicate.label} (Copy)`,
+      order: fields.length,
+    };
+
+    setFields([...fields, duplicatedField]);
+    setSelectedFieldId(duplicatedField.id);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // TODO: Save form to API using tRPC
+      // await trpc.forms.update.mutate({
+      //   id: formId,
+      //   title: formTitle,
+      //   description: formDescription,
+      // });
+      // await trpc.fields.reorder.mutate({
+      //   formId,
+      //   fields: fields.map(f => ({ id: f.id, order: f.order }))
+      // });
+      console.log('Form saved successfully');
+    } catch (error) {
+      console.error('Failed to save form:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    setIsSaving(true);
+    try {
+      if (isPublished) {
+        // TODO: Unpublish form
+        // await trpc.forms.unpublish.mutate({ id: formId });
+      } else {
+        // TODO: Publish form
+        // await trpc.forms.publish.mutate({ id: formId, visibility: 'public' });
+      }
+      setIsPublished(!isPublished);
+    } catch (error) {
+      console.error('Failed to toggle publish:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const selectedField = fields.find((f) => f.id === selectedFieldId);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-100">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center">
-        <div className="flex-1">
-          <input
-            type="text"
-            value={formTitle}
-            onChange={(e) => setFormTitle(e.target.value)}
-            className="text-2xl font-bold bg-transparent border-b-2 border-transparent hover:border-gray-300 focus:border-blue-500 outline-none"
-          />
-        </div>
-        <div className="flex gap-2">
-          <Link
-            href="/dashboard"
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-          >
-            Cancel
-          </Link>
-          <button
-            onClick={handlePublish}
-            className={`px-4 py-2 font-semibold rounded-lg transition ${
-              published
-                ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                : 'bg-green-600 text-white hover:bg-green-700'
-            }`}
-          >
-            {published ? 'Unpublish' : 'Publish'}
-          </button>
-        </div>
-      </div>
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4 flex-1">
+              <Link href="/dashboard">
+                <Button variant="ghost" size="sm">
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Back
+                </Button>
+              </Link>
 
-      {/* Canvas */}
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          {/* Form Fields */}
-          {fields.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-600 mb-4">No fields yet</p>
-              <button
-                onClick={handleAddField}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-              >
-                + Add Field
-              </button>
+              <div className="flex-1 min-w-0">
+                <Input
+                  value={formTitle}
+                  onChange={(e) => setFormTitle(e.target.value)}
+                  placeholder="Form title"
+                  className="text-lg font-semibold border-0 bg-transparent focus:ring-0 px-0 placeholder:text-slate-400"
+                />
+              </div>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {fields.map((field) => (
-                <div
-                  key={field.id}
-                  className="p-4 border border-gray-200 rounded-lg bg-gray-50 hover:shadow transition"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-900">{field.label}</p>
-                      <p className="text-sm text-gray-600">{field.type}</p>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteField(field.id)}
-                      className="text-red-600 hover:text-red-700 text-sm"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-              <button
-                onClick={handleAddField}
-                className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 transition"
-              >
-                + Add Field
-              </button>
-            </div>
-          )}
-        </div>
 
-        {/* Preview Link */}
-        {published && (
-          <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-900">
-              <strong>Form Published!</strong> Share this link:{' '}
-              <a
-                href={`/forms/${formId}`}
-                className="text-blue-600 underline"
-                target="_blank"
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                size="sm"
+                className="gap-2"
               >
-                {`${window.location.origin}/forms/${formId}`}
-              </a>
-            </p>
+                <Save className="w-4 h-4" />
+                Save
+              </Button>
+
+              <Button
+                onClick={handlePublish}
+                disabled={isSaving}
+                size="sm"
+                variant={isPublished ? 'destructive' : 'default'}
+              >
+                {isPublished ? 'Unpublish' : 'Publish'}
+              </Button>
+            </div>
           </div>
-        )}
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column: Field Editor */}
+          <div className="lg:col-span-1">
+            <FieldEditor
+              fields={fields}
+              formId={formId}
+              onFieldAdd={handleAddField}
+              onFieldUpdate={handleUpdateField}
+              onFieldDelete={handleDeleteField}
+              onFieldReorder={handleReorderFields}
+              onFieldDuplicate={handleDuplicateField}
+              selectedFieldId={selectedFieldId}
+              onSelectField={setSelectedFieldId}
+            />
+          </div>
+
+          {/* Middle Column: Field Config */}
+          <div className="lg:col-span-1">
+            <FieldConfigPanel
+              field={selectedField || null}
+              onUpdate={handleUpdateField}
+              onClose={() => setSelectedFieldId(undefined)}
+            />
+          </div>
+
+          {/* Right Column: Preview */}
+          <div className="lg:col-span-1">
+            <FormPreview
+              formTitle={formTitle}
+              formDescription={formDescription}
+              fields={fields}
+              isPublished={isPublished}
+            />
+          </div>
+        </div>
+
+        {/* Form Description */}
+        <div className="mt-6">
+          <Card className="p-4">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Form Description
+            </label>
+            <textarea
+              value={formDescription}
+              onChange={(e) => setFormDescription(e.target.value)}
+              placeholder="Tell respondents what this form is about..."
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              rows={3}
+            />
+          </Card>
+        </div>
       </div>
     </div>
   );
