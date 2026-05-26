@@ -128,9 +128,53 @@ export const LoginSchema = z.object({
   password: z.string(),
 });
 
+// Theme schemas
+export const ThemeConfigSchema = z.object({
+  primaryColor: z.string().regex(/^#[0-9A-F]{6}$/i).default('#3b82f6'),
+  secondaryColor: z.string().regex(/^#[0-9A-F]{6}$/i).default('#10b981'),
+  accentColor: z.string().regex(/^#[0-9A-F]{6}$/i).default('#f59e0b'),
+  backgroundColor: z.string().regex(/^#[0-9A-F]{6}$/i).default('#ffffff'),
+  textColor: z.string().regex(/^#[0-9A-F]{6}$/i).default('#1f2937'),
+  borderColor: z.string().regex(/^#[0-9A-F]{6}$/i).default('#e5e7eb'),
+  fontFamily: z.enum(['sans', 'serif', 'mono']).default('sans'),
+  fontSize: z.enum(['sm', 'base', 'lg']).default('base'),
+  borderRadius: z.enum(['none', 'sm', 'md', 'lg']).default('md'),
+  spacing: z.enum(['compact', 'normal', 'comfortable']).default('normal'),
+  buttonStyle: z.enum(['solid', 'outline', 'ghost']).default('solid'),
+});
+
+export const CreateThemeSchema = z.object({
+  name: z.string().min(1).max(255),
+  slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
+  description: z.string().max(500).optional(),
+  category: z.string().max(100).optional(),
+  config: ThemeConfigSchema,
+  isBuiltIn: z.boolean().default(false).optional(),
+});
+
+export const UpdateThemeSchema = CreateThemeSchema.partial().extend({
+  themeId: z.string().uuid(),
+});
+
+export const ApplyThemeSchema = z.object({
+  formId: z.string().uuid(),
+  themeId: z.string().uuid().optional(),
+  customTheme: ThemeConfigSchema.optional(),
+});
+
+export const GetThemesSchema = z.object({
+  category: z.string().optional(),
+  limit: z.number().int().positive().default(20),
+  offset: z.number().int().nonnegative().default(0),
+});
+
 export type CreateForm = z.infer<typeof CreateFormSchema>;
 export type UpdateForm = z.infer<typeof UpdateFormSchema>;
 export type CreateField = z.infer<typeof CreateFieldSchema>;
 export type SubmitResponse = z.infer<typeof SubmitResponseSchema>;
 export type SignUp = z.infer<typeof SignUpSchema>;
 export type Login = z.infer<typeof LoginSchema>;
+export type ThemeConfig = z.infer<typeof ThemeConfigSchema>;
+export type CreateTheme = z.infer<typeof CreateThemeSchema>;
+export type UpdateTheme = z.infer<typeof UpdateThemeSchema>;
+export type ApplyTheme = z.infer<typeof ApplyThemeSchema>;

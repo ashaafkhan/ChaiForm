@@ -9,7 +9,9 @@ import { Card } from '@chaiforms/ui/components/card';
 import { FieldEditor } from '@/components/FieldEditor';
 import { FieldConfigPanel } from '@/components/FieldConfigPanel';
 import { FormPreview } from '@/components/FormPreview';
-import { ChevronLeft, Save } from 'lucide-react';
+import { ThemeSelector } from '@/components/ThemeSelector';
+import { ThemeCustomizer, ThemeConfig } from '@/components/ThemeCustomizer';
+import { ChevronLeft, Save, Palette } from 'lucide-react';
 
 interface Field {
   id: string;
@@ -22,6 +24,16 @@ interface Field {
   options?: string[];
 }
 
+interface Theme {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  config: ThemeConfig;
+}
+
+type EditorTab = 'fields' | 'styling';
+
 export default function FormEditorPage() {
   const params = useParams();
   const formId = params.formId as string;
@@ -32,6 +44,11 @@ export default function FormEditorPage() {
   const [selectedFieldId, setSelectedFieldId] = useState<string | undefined>();
   const [isPublished, setIsPublished] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<EditorTab>('fields');
+  const [availableThemes, setAvailableThemes] = useState<Theme[]>([]);
+  const [selectedThemeId, setSelectedThemeId] = useState<string>();
+  const [customTheme, setCustomTheme] = useState<ThemeConfig | undefined>();
+  const [showThemeCustomizer, setShowThemeCustomizer] = useState(false);
 
   // Load form data on mount
   useEffect(() => {
@@ -43,6 +60,8 @@ export default function FormEditorPage() {
         // setFormDescription(form.description);
         // setFields(form.fields);
         // setIsPublished(form.status === 'published');
+        // setSelectedThemeId(form.themeId);
+        // setCustomTheme(form.customTheme);
       } catch (error) {
         console.error('Failed to load form:', error);
       }
@@ -50,6 +69,21 @@ export default function FormEditorPage() {
 
     loadForm();
   }, [formId]);
+
+  // Load available themes
+  useEffect(() => {
+    const loadThemes = async () => {
+      try {
+        // TODO: Load themes from tRPC
+        // const themes = await trpc.themes.list.query({});
+        // setAvailableThemes(themes);
+      } catch (error) {
+        console.error('Failed to load themes:', error);
+      }
+    };
+
+    loadThemes();
+  }, []);
 
   const handleAddField = (fieldType: string) => {
     const newField: Field = {
@@ -113,6 +147,13 @@ export default function FormEditorPage() {
       //   formId,
       //   fields: fields.map(f => ({ id: f.id, order: f.order }))
       // });
+      // if (selectedThemeId || customTheme) {
+      //   await trpc.themes.applyToForm.mutate({
+      //     formId,
+      //     themeId: selectedThemeId,
+      //     customTheme: customTheme,
+      //   });
+      // }
       console.log('Form saved successfully');
     } catch (error) {
       console.error('Failed to save form:', error);
@@ -137,6 +178,16 @@ export default function FormEditorPage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSelectTheme = (themeId: string) => {
+    setSelectedThemeId(themeId || undefined);
+    setCustomTheme(undefined);
+    setShowThemeCustomizer(false);
+  };
+
+  const handleUpdateCustomTheme = (updates: Partial<ThemeConfig>) => {
+    setCustomTheme((prev) => ({ ...prev, ...updates } as ThemeConfig));
   };
 
   const selectedField = fields.find((f) => f.id === selectedFieldId);
@@ -189,48 +240,143 @@ export default function FormEditorPage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Field Editor */}
-          <div className="lg:col-span-1">
-            <FieldEditor
-              fields={fields}
-              formId={formId}
-              onFieldAdd={handleAddField}
-              onFieldUpdate={handleUpdateField}
-              onFieldDelete={handleDeleteField}
-              onFieldReorder={handleReorderFields}
-              onFieldDuplicate={handleDuplicateField}
-              selectedFieldId={selectedFieldId}
-              onSelectField={setSelectedFieldId}
-            />
-          </div>
-
-          {/* Middle Column: Field Config */}
-          <div className="lg:col-span-1">
-            <FieldConfigPanel
-              field={selectedField || null}
-              onUpdate={handleUpdateField}
-              onClose={() => setSelectedFieldId(undefined)}
-            />
-          </div>
-
-          {/* Right Column: Preview */}
-          <div className="lg:col-span-1">
-            <FormPreview
-              formTitle={formTitle}
-              formDescription={formDescription}
-              fields={fields}
-              isPublished={isPublished}
-            />
+      {/* Tabs */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex gap-6">
+            <button
+              onClick={() => setActiveTab('fields')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition ${
+                activeTab === 'fields'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Fields
+            </button>
+            <button
+              onClick={() => setActiveTab('styling')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition flex items-center gap-2 ${
+                activeTab === 'styling'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Palette className="w-4 h-4" />
+              Styling
+            </button>
           </div>
         </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {activeTab === 'fields' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column: Field Editor */}
+            <div className="lg:col-span-1">
+              <FieldEditor
+                fields={fields}
+                formId={formId}
+                onFieldAdd={handleAddField}
+                onFieldUpdate={handleUpdateField}
+                onFieldDelete={handleDeleteField}
+                onFieldReorder={handleReorderFields}
+                onFieldDuplicate={handleDuplicateField}
+                selectedFieldId={selectedFieldId}
+                onSelectField={setSelectedFieldId}
+              />
+            </div>
+
+            {/* Middle Column: Field Config */}
+            <div className="lg:col-span-1">
+              <FieldConfigPanel
+                field={selectedField || null}
+                onUpdate={handleUpdateField}
+                onClose={() => setSelectedFieldId(undefined)}
+              />
+            </div>
+
+            {/* Right Column: Preview */}
+            <div className="lg:col-span-1">
+              <FormPreview
+                formTitle={formTitle}
+                formDescription={formDescription}
+                fields={fields}
+                isPublished={isPublished}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column: Theme Selector */}
+            <div className="lg:col-span-1">
+              <Card className="p-4 space-y-4">
+                <h3 className="font-semibold text-slate-900">Select Theme</h3>
+                <ThemeSelector
+                  themes={availableThemes}
+                  selectedThemeId={selectedThemeId}
+                  onSelectTheme={handleSelectTheme}
+                  isLoading={false}
+                />
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setShowThemeCustomizer(!showThemeCustomizer)}
+                >
+                  {showThemeCustomizer ? 'Hide' : 'Show'} Customizer
+                </Button>
+              </Card>
+            </div>
+
+            {/* Middle Column: Theme Customizer */}
+            <div className="lg:col-span-1">
+              {showThemeCustomizer && customTheme ? (
+                <ThemeCustomizer
+                  config={customTheme}
+                  onUpdate={handleUpdateCustomTheme}
+                  onClose={() => setShowThemeCustomizer(false)}
+                />
+              ) : (
+                <Card className="p-6 flex items-center justify-center h-full bg-slate-50">
+                  <p className="text-slate-500 text-center">
+                    Select a theme or click "Show Customizer" to create a custom theme
+                  </p>
+                </Card>
+              )}
+            </div>
+
+            {/* Right Column: Preview */}
+            <div className="lg:col-span-1">
+              <FormPreview
+                formTitle={formTitle}
+                formDescription={formDescription}
+                fields={fields}
+                isPublished={isPublished}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Form Description */}
         <div className="mt-6">
           <Card className="p-4">
             <label className="block text-sm font-medium text-slate-700 mb-2">
+              Form Description
+            </label>
+            <textarea
+              value={formDescription}
+              onChange={(e) => setFormDescription(e.target.value)}
+              placeholder="Tell respondents what this form is about..."
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              rows={3}
+            />
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
               Form Description
             </label>
             <textarea

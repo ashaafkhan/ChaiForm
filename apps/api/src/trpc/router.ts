@@ -4,6 +4,7 @@ import { formsRouter } from './routers/forms';
 import { fieldsRouter } from './routers/fields';
 import { responsesRouter } from './routers/responses';
 import { analyticsRouter } from './routers/analytics';
+import { themesRouter } from './routers/themes';
 
 export const appRouter = router({
   auth: authRouter,
@@ -11,6 +12,7 @@ export const appRouter = router({
   fields: fieldsRouter,
   responses: responsesRouter,
   analytics: analyticsRouter,
+  themes: themesRouter,
 });
 
 export type AppRouter = typeof appRouter;
