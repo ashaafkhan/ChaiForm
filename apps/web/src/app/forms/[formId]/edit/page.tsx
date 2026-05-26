@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { trpc } from '@/lib/trpc';
 import { getStoredUser } from '@/lib/auth';
+import { ThemeSelector } from '@/components/ThemeSelector';
+import { ThemeCustomizer, type ThemeConfig } from '@/components/ThemeCustomizer';
 
 const FIELD_TYPES = [
   { type: 'short_text', label: 'Short Text', icon: '✏️', group: 'Basic' },
@@ -79,6 +81,11 @@ export default function FormEditorPage() {
   const [activeGroup, setActiveGroup] = useState('Basic');
   const mounted = useRef(false);
 
+  const [activeTab, setActiveTab] = useState<'fields' | 'design'>('fields');
+  const [isCustomizing, setIsCustomizing] = useState(false);
+  const [localCustomTheme, setLocalCustomTheme] = useState<any>(null);
+  const utils = trpc.useUtils();
+
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
   // Auth guard
@@ -88,6 +95,15 @@ export default function FormEditorPage() {
   }, [router]);
 
   const { data: queryData } = trpc.forms.getById.useQuery({ formId });
+  const { data: themesData, isLoading: isThemesLoading } = trpc.themes.list.useQuery({});
+  const { data: formThemeData, isLoading: isFormThemeLoading } = trpc.themes.getFormTheme.useQuery({ formId });
+
+  // Sync custom theme from DB
+  useEffect(() => {
+    if (formThemeData) {
+      setLocalCustomTheme(formThemeData.customTheme || {});
+    }
+  }, [formThemeData]);
 
   useEffect(() => {
     if (queryData && !mounted.current) {
@@ -101,10 +117,105 @@ export default function FormEditorPage() {
   }, [queryData]);
 
   const updateMutation = trpc.forms.update.useMutation({ onSuccess: () => setSaveStatus('saved') });
+
+  const applyThemeMutation = trpc.themes.applyToForm.useMutation({
+    onSuccess: () => {
+      setSaveStatus('saved');
+      utils.themes.getFormTheme.invalidate({ formId });
+    },
+  });
+
+  const debouncedCustomTheme = useDebounce(localCustomTheme, 1000);
+
+  useEffect(() => {
+    if (!mounted.current || localCustomTheme === null || !formThemeData) return;
+    const dbCustom = formThemeData.customTheme || {};
+    if (JSON.stringify(debouncedCustomTheme) !== JSON.stringify(dbCustom)) {
+      setSaveStatus('saving');
+      applyThemeMutation.mutate({
+        formId,
+        themeId: formThemeData.themeId || null,
+        customTheme: debouncedCustomTheme,
+      });
+    }
+  }, [debouncedCustomTheme]);
+
+  const mapDbThemeToUiTheme = (dbTheme: any) => {
+    const config = dbTheme.config || {};
+    const colors = config.colors || {};
+    const typography = config.typography || {};
+    return {
+      ...dbTheme,
+      config: {
+        primaryColor: colors.primary || '#f97316',
+        secondaryColor: colors.surface || '#16161f',
+        accentColor: colors.accent || '#f59e0b',
+        backgroundColor: colors.background || '#0a0a0f',
+        textColor: colors.text || '#f0f0ff',
+        borderColor: colors.border || 'rgba(255,255,255,0.12)',
+        fontFamily: typography.fontFamily || 'sans',
+        fontSize: typography.baseFontSize || 'base',
+        borderRadius: config.borderRadius || 'md',
+        spacing: config.spacing || 'normal',
+        buttonStyle: config.buttonStyle || 'solid',
+      }
+    };
+  };
+
+  const mappedThemes = (themesData || []).map(mapDbThemeToUiTheme);
+
+  const getActiveConfig = (): ThemeConfig => {
+    const activeTheme = (themesData || []).find(t => t.id === formThemeData?.themeId);
+    const baseConfig = activeTheme ? mapDbThemeToUiTheme(activeTheme).config : {
+      primaryColor: '#f97316',
+      secondaryColor: '#16161f',
+      accentColor: '#f59e0b',
+      backgroundColor: '#0a0a0f',
+      textColor: '#f0f0ff',
+      borderColor: 'rgba(255,255,255,0.12)',
+      fontFamily: 'sans',
+      fontSize: 'base',
+      borderRadius: 'md',
+      spacing: 'normal',
+      buttonStyle: 'solid',
+    };
+    const custom = localCustomTheme || {};
+    return {
+      primaryColor: custom.primaryColor || baseConfig.primaryColor,
+      secondaryColor: custom.secondaryColor || baseConfig.secondaryColor,
+      accentColor: custom.accentColor || baseConfig.accentColor,
+      backgroundColor: custom.backgroundColor || baseConfig.backgroundColor,
+      textColor: custom.textColor || baseConfig.textColor,
+      borderColor: custom.borderColor || baseConfig.borderColor,
+      fontFamily: custom.fontFamily || baseConfig.fontFamily,
+      fontSize: custom.fontSize || baseConfig.fontSize,
+      borderRadius: custom.borderRadius || baseConfig.borderRadius,
+      spacing: custom.spacing || baseConfig.spacing,
+      buttonStyle: custom.buttonStyle || baseConfig.buttonStyle,
+    };
+  };
+
+  const handleSelectTheme = (themeId: string) => {
+    setSaveStatus('saving');
+    setLocalCustomTheme({});
+    applyThemeMutation.mutate({
+      formId,
+      themeId: themeId || null,
+      customTheme: null,
+    });
+  };
+
+  const handleUpdateCustomTheme = (updatedConfig: Partial<ThemeConfig>) => {
+    setLocalCustomTheme((prev: any) => ({
+      ...(prev || {}),
+      ...updatedConfig,
+    }));
+  };
   const createFieldMutation = trpc.fields.create.useMutation({
     onSuccess: (data: any) => {
       setFields(prev => [...prev, data.field as Field].sort((a, b) => a.order - b.order));
       setSelectedId(data.field.id);
+      setActiveTab('fields');
       showToast('Field added ✓');
     },
   });
@@ -248,7 +359,7 @@ export default function FormEditorPage() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
               {fields.map((field, index) => (
-                <div key={field.id} onClick={() => setSelectedId(field.id)}
+                <div key={field.id} onClick={() => { setSelectedId(field.id); setActiveTab('fields'); }}
                   style={{
                     padding: '0.875rem 1.125rem',
                     background: selectedId === field.id ? 'rgba(249,115,22,0.07)' : S.card,
@@ -296,125 +407,201 @@ export default function FormEditorPage() {
         </div>
 
         {/* RIGHT: Config Panel */}
-        <div style={{ borderLeft: `1px solid ${S.border}`, overflowY: 'auto', padding: '1rem', background: 'rgba(10,10,18,0.3)' }}>
-          {selectedField ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', animation: 'slideInRight 0.25s ease' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.75rem', borderBottom: `1px solid ${S.border}` }}>
-                <span style={{ fontSize: '1.125rem' }}>{FIELD_TYPES.find(f => f.type === selectedField.type)?.icon}</span>
-                <div>
-                  <p style={{ fontSize: '0.75rem', fontWeight: 700, color: S.accent, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    {FIELD_TYPES.find(f => f.type === selectedField.type)?.label}
-                  </p>
-                  <p style={{ fontSize: '0.7rem', color: S.hint }}>Field Settings</p>
-                </div>
-              </div>
+        <div style={{ borderLeft: `1px solid ${S.border}`, display: 'flex', flexDirection: 'column', background: 'rgba(10,10,18,0.3)', overflow: 'hidden' }}>
+          {/* Tabs */}
+          <div style={{ display: 'flex', borderBottom: `1px solid ${S.border}`, background: 'rgba(13,13,20,0.5)', flexShrink: 0 }}>
+            <button
+              onClick={() => setActiveTab('fields')}
+              style={{
+                flex: 1,
+                padding: '0.75rem',
+                background: activeTab === 'fields' ? 'rgba(255,255,255,0.05)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'fields' ? `2px solid ${S.accent}` : 'none',
+                color: activeTab === 'fields' ? S.text : S.muted,
+                fontWeight: 600,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              Fields
+            </button>
+            <button
+              onClick={() => setActiveTab('design')}
+              style={{
+                flex: 1,
+                padding: '0.75rem',
+                background: activeTab === 'design' ? 'rgba(255,255,255,0.05)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'design' ? `2px solid ${S.accent}` : 'none',
+                color: activeTab === 'design' ? S.text : S.muted,
+                fontWeight: 600,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              Design
+            </button>
+          </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: S.muted, marginBottom: '0.35rem' }}>Label *</label>
-                <input className="input-field" style={{ fontSize: '0.875rem' }}
-                  value={selectedField.label}
-                  onChange={e => handleUpdateField(selectedField.id, { label: e.target.value })}
-                  placeholder="Question label" />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: S.muted, marginBottom: '0.35rem' }}>Helper Text</label>
-                <input className="input-field" style={{ fontSize: '0.875rem' }}
-                  value={selectedField.description || ''}
-                  onChange={e => handleUpdateField(selectedField.id, { description: e.target.value })}
-                  placeholder="Shown below the label" />
-              </div>
-
-              {!['statement', 'section_break', 'yes_no', 'checkbox', 'rating', 'scale'].includes(selectedField.type) && (
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: S.muted, marginBottom: '0.35rem' }}>Placeholder</label>
-                  <input className="input-field" style={{ fontSize: '0.875rem' }}
-                    value={selectedField.placeholder || ''}
-                    onChange={e => handleUpdateField(selectedField.id, { placeholder: e.target.value })}
-                    placeholder="Input hint text" />
-                </div>
-              )}
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.625rem 0.75rem', background: S.elevated, borderRadius: '8px', cursor: 'pointer' }}>
-                <input type="checkbox" checked={selectedField.isRequired}
-                  onChange={e => handleUpdateField(selectedField.id, { isRequired: e.target.checked })}
-                  style={{ width: '16px', height: '16px', accentColor: S.accent }} />
-                <span style={{ fontSize: '0.875rem', color: S.text }}>Required field</span>
-              </label>
-
-              {/* Options Editor */}
-              {CHOICE_TYPES.includes(selectedField.type) && (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 500, color: S.muted }}>Options ({selectedField.options?.length || 0})</label>
-                    <button onClick={() => {
-                      const o: FieldOption = { id: Date.now().toString(), label: `Option ${(selectedField.options?.length || 0) + 1}`, value: `opt-${Date.now()}` };
-                      handleUpdateField(selectedField.id, { options: [...(selectedField.options || []), o] });
-                    }} style={{ background: 'transparent', border: 'none', color: S.accent, cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 700 }}>+ Add</button>
+          {/* Content */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+            {activeTab === 'fields' ? (
+              selectedField ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', animation: 'slideInRight 0.25s ease' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingBottom: '0.75rem', borderBottom: `1px solid ${S.border}` }}>
+                    <span style={{ fontSize: '1.125rem' }}>{FIELD_TYPES.find(f => f.type === selectedField.type)?.icon}</span>
+                    <div>
+                      <p style={{ fontSize: '0.75rem', fontWeight: 700, color: S.accent, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                        {FIELD_TYPES.find(f => f.type === selectedField.type)?.label}
+                      </p>
+                      <p style={{ fontSize: '0.7rem', color: S.hint }}>Field Settings</p>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    {(selectedField.options || []).map((opt, i) => (
-                      <div key={opt.id} style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
-                        <span style={{ color: S.hint, fontSize: '0.75rem', fontFamily: 'monospace', width: '16px' }}>{i + 1}.</span>
-                        <input className="input-field" style={{ fontSize: '0.8125rem', flex: 1 }}
-                          value={opt.label}
-                          onChange={e => {
-                            const newOpts = selectedField.options!.map((o, idx) =>
-                              idx === i ? { ...o, label: e.target.value, value: e.target.value.toLowerCase().replace(/\s+/g, '-') } : o
-                            );
-                            handleUpdateField(selectedField.id, { options: newOpts });
-                          }}
-                          placeholder={`Option ${i + 1}`} />
-                        <button onClick={() => handleUpdateField(selectedField.id, { options: selectedField.options!.filter((_, idx) => idx !== i) })}
-                          style={{ background: 'transparent', border: 'none', color: S.hint, cursor: 'pointer', flexShrink: 0, padding: '0.25rem' }}
-                          onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#ef4444'}
-                          onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = S.hint}>✕</button>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: S.muted, marginBottom: '0.35rem' }}>Label *</label>
+                    <input className="input-field" style={{ fontSize: '0.875rem' }}
+                      value={selectedField.label}
+                      onChange={e => handleUpdateField(selectedField.id, { label: e.target.value })}
+                      placeholder="Question label" />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: S.muted, marginBottom: '0.35rem' }}>Helper Text</label>
+                    <input className="input-field" style={{ fontSize: '0.875rem' }}
+                      value={selectedField.description || ''}
+                      onChange={e => handleUpdateField(selectedField.id, { description: e.target.value })}
+                      placeholder="Shown below the label" />
+                  </div>
+
+                  {!['statement', 'section_break', 'yes_no', 'checkbox', 'rating', 'scale'].includes(selectedField.type) && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: S.muted, marginBottom: '0.35rem' }}>Placeholder</label>
+                      <input className="input-field" style={{ fontSize: '0.875rem' }}
+                        value={selectedField.placeholder || ''}
+                        onChange={e => handleUpdateField(selectedField.id, { placeholder: e.target.value })}
+                        placeholder="Input hint text" />
+                    </div>
+                  )}
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.625rem 0.75rem', background: S.elevated, borderRadius: '8px', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={selectedField.isRequired}
+                      onChange={e => handleUpdateField(selectedField.id, { isRequired: e.target.checked })}
+                      style={{ width: '16px', height: '16px', accentColor: S.accent }} />
+                    <span style={{ fontSize: '0.875rem', color: S.text }}>Required field</span>
+                  </label>
+
+                  {/* Options Editor */}
+                  {CHOICE_TYPES.includes(selectedField.type) && (
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 500, color: S.muted }}>Options ({selectedField.options?.length || 0})</label>
+                        <button onClick={() => {
+                          const o: FieldOption = { id: Date.now().toString(), label: `Option ${(selectedField.options?.length || 0) + 1}`, value: `opt-${Date.now()}` };
+                          handleUpdateField(selectedField.id, { options: [...(selectedField.options || []), o] });
+                        }} style={{ background: 'transparent', border: 'none', color: S.accent, cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 700 }}>+ Add</button>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        {(selectedField.options || []).map((opt, i) => (
+                          <div key={opt.id} style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                            <span style={{ color: S.hint, fontSize: '0.75rem', fontFamily: 'monospace', width: '16px' }}>{i + 1}.</span>
+                            <input className="input-field" style={{ fontSize: '0.8125rem', flex: 1 }}
+                              value={opt.label}
+                              onChange={e => {
+                                const newOpts = selectedField.options!.map((o, idx) =>
+                                  idx === i ? { ...o, label: e.target.value, value: e.target.value.toLowerCase().replace(/\s+/g, '-') } : o
+                                );
+                                handleUpdateField(selectedField.id, { options: newOpts });
+                              }}
+                              placeholder={`Option ${i + 1}`} />
+                            <button onClick={() => handleUpdateField(selectedField.id, { options: selectedField.options!.filter((_, idx) => idx !== i) })}
+                              style={{ background: 'transparent', border: 'none', color: S.hint, cursor: 'pointer', flexShrink: 0, padding: '0.25rem' }}
+                              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#ef4444'}
+                              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = S.hint}>✕</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-              {selectedField.type === 'rating' && (
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: S.muted, marginBottom: '0.35rem' }}>Max Stars</label>
-                  <select className="input-field" style={{ fontSize: '0.875rem' }}
-                    value={(selectedField.validation as any)?.maxRating || 5}
-                    onChange={e => handleUpdateField(selectedField.id, { validation: { maxRating: parseInt(e.target.value) } })}>
-                    {[3, 4, 5, 7, 10].map(n => <option key={n} value={n}>{n} stars</option>)}
-                  </select>
-                </div>
-              )}
+                  {selectedField.type === 'rating' && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: S.muted, marginBottom: '0.35rem' }}>Max Stars</label>
+                      <select className="input-field" style={{ fontSize: '0.875rem' }}
+                        value={(selectedField.validation as any)?.maxRating || 5}
+                        onChange={e => handleUpdateField(selectedField.id, { validation: { maxRating: parseInt(e.target.value) } })}>
+                        {[3, 4, 5, 7, 10].map(n => <option key={n} value={n}>{n} stars</option>)}
+                      </select>
+                    </div>
+                  )}
 
-              {selectedField.type === 'scale' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: S.muted, marginBottom: '0.35rem' }}>Min</label>
-                    <input type="number" className="input-field" style={{ fontSize: '0.875rem' }}
-                      value={(selectedField.validation as any)?.min ?? 1}
-                      onChange={e => handleUpdateField(selectedField.id, { validation: { ...(selectedField.validation || {}), min: parseInt(e.target.value) } })} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: S.muted, marginBottom: '0.35rem' }}>Max</label>
-                    <input type="number" className="input-field" style={{ fontSize: '0.875rem' }}
-                      value={(selectedField.validation as any)?.max ?? 10}
-                      onChange={e => handleUpdateField(selectedField.id, { validation: { ...(selectedField.validation || {}), max: parseInt(e.target.value) } })} />
-                  </div>
-                </div>
-              )}
+                  {selectedField.type === 'scale' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: S.muted, marginBottom: '0.35rem' }}>Min</label>
+                        <input type="number" className="input-field" style={{ fontSize: '0.875rem' }}
+                          value={(selectedField.validation as any)?.min ?? 1}
+                          onChange={e => handleUpdateField(selectedField.id, { validation: { ...(selectedField.validation || {}), min: parseInt(e.target.value) } })} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: S.muted, marginBottom: '0.35rem' }}>Max</label>
+                        <input type="number" className="input-field" style={{ fontSize: '0.875rem' }}
+                          value={(selectedField.validation as any)?.max ?? 10}
+                          onChange={e => handleUpdateField(selectedField.id, { validation: { ...(selectedField.validation || {}), max: parseInt(e.target.value) } })} />
+                      </div>
+                    </div>
+                  )}
 
-              <button className="btn-danger" style={{ marginTop: '0.5rem', fontSize: '0.8125rem' }}
-                onClick={() => handleDeleteField(selectedField.id)}>
-                🗑️ Delete Field
-              </button>
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '3rem 1rem', color: S.hint, animation: 'fadeIn 0.3s ease' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '0.875rem' }}>👈</div>
-              <p style={{ fontSize: '0.875rem', fontWeight: 500, color: S.muted }}>Select a field to configure</p>
-              <p style={{ fontSize: '0.8rem', marginTop: '0.375rem' }}>Click any field in the canvas</p>
-            </div>
-          )}
+                  <button className="btn-danger" style={{ marginTop: '0.5rem', fontSize: '0.8125rem' }}
+                    onClick={() => handleDeleteField(selectedField.id)}>
+                    🗑️ Delete Field
+                  </button>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '3rem 1rem', color: S.hint, animation: 'fadeIn 0.3s ease' }}>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '0.875rem' }}>👈</div>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 500, color: S.muted }}>Select a field to configure</p>
+                  <p style={{ fontSize: '0.8rem', marginTop: '0.375rem' }}>Click any field in the canvas</p>
+                </div>
+              )
+            ) : (
+              isCustomizing ? (
+                <ThemeCustomizer
+                  config={getActiveConfig()}
+                  onUpdate={handleUpdateCustomTheme}
+                  onClose={() => setIsCustomizing(false)}
+                />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <button
+                    onClick={() => setIsCustomizing(true)}
+                    style={{
+                      width: '100%',
+                      fontSize: '0.8rem',
+                      padding: '0.5rem',
+                      background: S.accent,
+                      border: 'none',
+                      color: '#fff',
+                      fontWeight: 600,
+                      borderRadius: '6px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🎨 Customize Theme Colors
+                  </button>
+                  <ThemeSelector
+                    themes={mappedThemes}
+                    selectedThemeId={formThemeData?.themeId || undefined}
+                    onSelectTheme={handleSelectTheme}
+                    isLoading={isThemesLoading || isFormThemeLoading}
+                  />
+                </div>
+              )
+            )}
+          </div>
         </div>
       </div>
 

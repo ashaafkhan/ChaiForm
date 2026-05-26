@@ -32,7 +32,7 @@ const PLANS = [
       'Unlimited forms',
       '10,000 responses / month',
       'All 20+ field types',
-      'All 14 themes',
+      'All 6 themes',
       'Advanced analytics & funnel',
       'CSV export',
       'Custom domain',

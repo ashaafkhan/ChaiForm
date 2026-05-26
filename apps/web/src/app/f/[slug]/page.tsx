@@ -154,13 +154,14 @@ export default function PublicFormPage() {
 
   // Theme and custom override resolving
   const theme = (form?.theme as any) || {};
+  const themeSlug = theme.slug || '';
   const themeConfig = theme.config || {};
   const themeColors = themeConfig.colors || {};
   const themeTypography = themeConfig.typography || {};
   const custom = (form?.customTheme as any) || {};
 
   const bg = custom.backgroundColor || themeColors.background || '#0a0a0f';
-  const surface = custom.surfaceColor || themeColors.surface || '#16161f';
+  const surface = custom.surfaceColor || custom.secondaryColor || themeColors.surface || '#16161f';
   const text = custom.textColor || themeColors.text || '#f0f0ff';
   const textMuted = custom.textMutedColor || themeColors.textMuted || '#9090b0';
   const primary = custom.primaryColor || themeColors.primary || '#f97316';
@@ -455,6 +456,7 @@ export default function PublicFormPage() {
               return (
                 <label
                   key={opt.id}
+                  className={`option-label ${isSelected ? 'option-label-selected' : ''}`}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -492,6 +494,7 @@ export default function PublicFormPage() {
               return (
                 <label
                   key={opt.id}
+                  className={`option-label ${selected ? 'option-label-selected' : ''}`}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -582,6 +585,7 @@ export default function PublicFormPage() {
                 key={n}
                 type="button"
                 onClick={() => updateAnswer(field.id, n)}
+                className={`scale-button ${current === n ? 'scale-button-selected' : ''}`}
                 style={{
                   width: '44px',
                   height: '44px',
@@ -619,6 +623,7 @@ export default function PublicFormPage() {
                   key={String(opt.value)}
                   type="button"
                   onClick={() => updateAnswer(field.id, opt.value)}
+                  className={`option-label scale-button ${isSelected ? 'option-label-selected scale-button-selected' : ''}`}
                   style={{
                     flex: 1,
                     padding: '1rem',
@@ -692,6 +697,7 @@ export default function PublicFormPage() {
 
   return (
     <div
+      className={`form-page-theme-${themeSlug}`}
       style={{
         minHeight: '100vh',
         background: `radial-gradient(ellipse 100% 50% at 50% 0%, rgba(249,115,22,0.06), transparent), ${bg}`,
@@ -711,6 +717,541 @@ export default function PublicFormPage() {
         input[type="date"]::-webkit-calendar-picker-indicator,
         input[type="time"]::-webkit-calendar-picker-indicator {
           filter: invert(1) opacity(0.5);
+        }
+
+        /* MATRIX THEME */
+        .form-page-theme-the-matrix {
+          position: relative;
+          overflow-x: hidden;
+          background-color: #0D0208 !important;
+          background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                            linear-gradient(90deg, rgba(0, 255, 65, 0.03), rgba(0, 255, 65, 0.01), rgba(0, 255, 65, 0.03)) !important;
+          background-size: 100% 4px, 6px 100% !important;
+          font-family: 'Courier New', Courier, monospace !important;
+        }
+        .form-page-theme-the-matrix::after {
+          content: " ";
+          display: block;
+          position: fixed;
+          top: 0; left: 0; bottom: 0; right: 0;
+          background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.4) 100%);
+          pointer-events: none;
+          z-index: 10;
+        }
+        .form-page-theme-the-matrix .field-card-wrapper {
+          background: rgba(13, 2, 8, 0.9) !important;
+          border: 1px solid #00FF41 !important;
+          border-radius: 2px !important;
+          box-shadow: 0 0 10px rgba(0, 255, 65, 0.15) !important;
+          padding: 1.5rem !important;
+          margin-bottom: 2rem !important;
+        }
+        .form-page-theme-the-matrix .field-card-wrapper:hover {
+          box-shadow: 0 0 20px rgba(0, 255, 65, 0.3) !important;
+        }
+        .form-page-theme-the-matrix .field-label {
+          color: #00FF41 !important;
+          font-family: 'Courier New', Courier, monospace !important;
+          text-shadow: 0 0 5px #00FF41, 0 0 10px rgba(0, 255, 65, 0.5) !important;
+          letter-spacing: 0.05em !important;
+        }
+        .form-page-theme-the-matrix .field-description {
+          color: #00AA2B !important;
+          font-family: 'Courier New', Courier, monospace !important;
+        }
+        .form-page-theme-the-matrix input[type="text"],
+        .form-page-theme-the-matrix input[type="email"],
+        .form-page-theme-the-matrix input[type="url"],
+        .form-page-theme-the-matrix input[type="number"],
+        .form-page-theme-the-matrix input[type="date"],
+        .form-page-theme-the-matrix input[type="time"],
+        .form-page-theme-the-matrix textarea,
+        .form-page-theme-the-matrix select {
+          background: #000000 !important;
+          border: 1px solid #00AA2B !important;
+          color: #00FF41 !important;
+          border-radius: 2px !important;
+          font-family: 'Courier New', Courier, monospace !important;
+          box-shadow: inset 0 0 5px rgba(0, 255, 65, 0.2) !important;
+        }
+        .form-page-theme-the-matrix input:focus,
+        .form-page-theme-the-matrix textarea:focus,
+        .form-page-theme-the-matrix select:focus {
+          border-color: #00FF41 !important;
+          box-shadow: 0 0 12px #00FF41, inset 0 0 5px rgba(0, 255, 65, 0.5) !important;
+          outline: none !important;
+        }
+        .form-page-theme-the-matrix .option-label {
+          background: #000000 !important;
+          border: 1px solid #00AA2B !important;
+          border-radius: 2px !important;
+        }
+        .form-page-theme-the-matrix .option-label:hover {
+          border-color: #00FF41 !important;
+          box-shadow: 0 0 8px rgba(0, 255, 65, 0.3) !important;
+        }
+        .form-page-theme-the-matrix .option-label-selected {
+          background: rgba(0, 255, 65, 0.1) !important;
+          border-color: #00FF41 !important;
+          box-shadow: 0 0 10px rgba(0, 255, 65, 0.4) !important;
+        }
+        .form-page-theme-the-matrix .scale-button {
+          background: #000000 !important;
+          border: 1px solid #00AA2B !important;
+          color: #00FF41 !important;
+          border-radius: 2px !important;
+        }
+        .form-page-theme-the-matrix .scale-button-selected {
+          background: #00FF41 !important;
+          color: #000000 !important;
+          border-color: #00FF41 !important;
+          box-shadow: 0 0 12px #00FF41 !important;
+        }
+        .form-page-theme-the-matrix .submit-button {
+          background: #000000 !important;
+          border: 2px solid #00FF41 !important;
+          color: #00FF41 !important;
+          border-radius: 2px !important;
+          text-transform: uppercase !important;
+          font-family: 'Courier New', Courier, monospace !important;
+          font-weight: 900 !important;
+          letter-spacing: 0.1em !important;
+          box-shadow: 0 0 10px rgba(0, 255, 65, 0.3) !important;
+        }
+        .form-page-theme-the-matrix .submit-button:hover:not(:disabled) {
+          background: #00FF41 !important;
+          color: #000000 !important;
+          box-shadow: 0 0 20px #00FF41 !important;
+        }
+
+        /* CYBERPUNK THEME */
+        .form-page-theme-cyberpunk {
+          background-color: #0c0c0e !important;
+          background-image: 
+            linear-gradient(rgba(255, 45, 120, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 45, 120, 0.05) 1px, transparent 1px) !important;
+          background-size: 30px 30px !important;
+          position: relative;
+        }
+        .form-page-theme-cyberpunk .field-card-wrapper {
+          background: #111115 !important;
+          border: 2px solid #ff2d78 !important;
+          border-radius: 0px !important;
+          box-shadow: 4px 4px 0px #00ffff !important;
+          padding: 1.5rem !important;
+          margin-bottom: 2rem !important;
+          clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%) !important;
+        }
+        .form-page-theme-cyberpunk .field-card-wrapper:hover {
+          box-shadow: 6px 6px 0px #00ffff, -2px -2px 10px rgba(255, 45, 120, 0.4) !important;
+        }
+        .form-page-theme-cyberpunk .field-label {
+          color: #00ffff !important;
+          font-family: 'Orbitron', 'Inter', sans-serif !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.08em !important;
+          text-shadow: 0 0 5px rgba(0, 255, 255, 0.6) !important;
+        }
+        .form-page-theme-cyberpunk .field-description {
+          color: #888899 !important;
+        }
+        .form-page-theme-cyberpunk input[type="text"],
+        .form-page-theme-cyberpunk input[type="email"],
+        .form-page-theme-cyberpunk input[type="url"],
+        .form-page-theme-cyberpunk input[type="number"],
+        .form-page-theme-cyberpunk input[type="date"],
+        .form-page-theme-cyberpunk input[type="time"],
+        .form-page-theme-cyberpunk textarea,
+        .form-page-theme-cyberpunk select {
+          background: #1a1a24 !important;
+          border: 1px solid #ff2d78 !important;
+          color: #ffffff !important;
+          border-radius: 0px !important;
+          box-shadow: inset 2px 2px 0px rgba(0, 255, 255, 0.1) !important;
+        }
+        .form-page-theme-cyberpunk input:focus,
+        .form-page-theme-cyberpunk textarea:focus,
+        .form-page-theme-cyberpunk select:focus {
+          border-color: #00ffff !important;
+          box-shadow: 0 0 10px rgba(0, 255, 255, 0.5), inset 2px 2px 0px rgba(255, 45, 120, 0.2) !important;
+          outline: none !important;
+        }
+        .form-page-theme-cyberpunk .option-label {
+          background: #15151b !important;
+          border: 1px solid #333344 !important;
+          border-radius: 0px !important;
+        }
+        .form-page-theme-cyberpunk .option-label:hover {
+          border-color: #ff2d78 !important;
+        }
+        .form-page-theme-cyberpunk .option-label-selected {
+          background: rgba(255, 45, 120, 0.1) !important;
+          border-color: #ff2d78 !important;
+          box-shadow: 3px 3px 0px #00ffff !important;
+        }
+        .form-page-theme-cyberpunk .scale-button {
+          background: #15151b !important;
+          border: 1px solid #ff2d78 !important;
+          color: #ffffff !important;
+          border-radius: 0px !important;
+        }
+        .form-page-theme-cyberpunk .scale-button-selected {
+          background: #00ffff !important;
+          color: #000000 !important;
+          border-color: #00ffff !important;
+          box-shadow: 3px 3px 0px #ff2d78 !important;
+          font-weight: bold !important;
+        }
+        .form-page-theme-cyberpunk .submit-button {
+          background: #ff2d78 !important;
+          border: none !important;
+          color: #ffffff !important;
+          border-radius: 0px !important;
+          font-family: 'Orbitron', sans-serif !important;
+          font-weight: 800 !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.1em !important;
+          box-shadow: 4px 4px 0px #00ffff !important;
+          clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px)) !important;
+        }
+        .form-page-theme-cyberpunk .submit-button:hover:not(:disabled) {
+          background: #00ffff !important;
+          color: #000000 !important;
+          box-shadow: 4px 4px 0px #ff2d78 !important;
+        }
+
+        /* INTERSTELLAR THEME */
+        .form-page-theme-interstellar {
+          background-color: #060913 !important;
+          background-image: 
+            radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+            radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+            radial-gradient(rgba(245, 166, 35, 0.05) 2px, transparent 40px) !important;
+          background-size: 550px 550px, 350px 350px, 450px 450px !important;
+          background-position: 0 0, 40px 60px, 130px 270px !important;
+        }
+        .form-page-theme-interstellar .field-card-wrapper {
+          background: rgba(14, 18, 36, 0.75) !important;
+          border: 1px solid rgba(245, 166, 35, 0.25) !important;
+          border-radius: 12px !important;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255,255,255,0.1) !important;
+          backdrop-filter: blur(16px) !important;
+          padding: 1.75rem !important;
+        }
+        .form-page-theme-interstellar .field-card-wrapper:hover {
+          border-color: rgba(245, 166, 35, 0.5) !important;
+          box-shadow: 0 15px 50px rgba(245, 166, 35, 0.1) !important;
+        }
+        .form-page-theme-interstellar h1,
+        .form-page-theme-interstellar .field-label {
+          font-family: 'Cinzel', 'Playfair Display', Georgia, serif !important;
+          color: #FFEED5 !important;
+          letter-spacing: 0.03em !important;
+        }
+        .form-page-theme-interstellar .field-description {
+          color: #8fa0c0 !important;
+        }
+        .form-page-theme-interstellar input[type="text"],
+        .form-page-theme-interstellar input[type="email"],
+        .form-page-theme-interstellar input[type="url"],
+        .form-page-theme-interstellar input[type="number"],
+        .form-page-theme-interstellar input[type="date"],
+        .form-page-theme-interstellar input[type="time"],
+        .form-page-theme-interstellar textarea,
+        .form-page-theme-interstellar select {
+          background: rgba(10, 12, 22, 0.8) !important;
+          border: 1px solid rgba(255, 255, 255, 0.15) !important;
+          color: #ffffff !important;
+          border-radius: 8px !important;
+        }
+        .form-page-theme-interstellar input:focus,
+        .form-page-theme-interstellar textarea:focus,
+        .form-page-theme-interstellar select:focus {
+          border-color: #F5A623 !important;
+          box-shadow: 0 0 12px rgba(245, 166, 35, 0.35) !important;
+          outline: none !important;
+        }
+        .form-page-theme-interstellar .option-label {
+          background: rgba(20, 25, 45, 0.6) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          border-radius: 8px !important;
+        }
+        .form-page-theme-interstellar .option-label:hover {
+          border-color: rgba(245, 166, 35, 0.3) !important;
+        }
+        .form-page-theme-interstellar .option-label-selected {
+          background: rgba(245, 166, 35, 0.12) !important;
+          border-color: #F5A623 !important;
+          box-shadow: 0 0 15px rgba(245, 166, 35, 0.15) !important;
+        }
+        .form-page-theme-interstellar .scale-button {
+          background: rgba(20, 25, 45, 0.6) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          color: #FFEED5 !important;
+        }
+        .form-page-theme-interstellar .scale-button-selected {
+          background: linear-gradient(135deg, #F5A623, #d97706) !important;
+          border-color: #F5A623 !important;
+          box-shadow: 0 0 15px rgba(245, 166, 35, 0.4) !important;
+        }
+        .form-page-theme-interstellar .submit-button {
+          background: linear-gradient(135deg, #F5A623, #b45309) !important;
+          color: #0a0a16 !important;
+          font-weight: 800 !important;
+          border-radius: 8px !important;
+          box-shadow: 0 4px 20px rgba(245, 166, 35, 0.25) !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.05em !important;
+        }
+        .form-page-theme-interstellar .submit-button:hover:not(:disabled) {
+          box-shadow: 0 6px 25px rgba(245, 166, 35, 0.4) !important;
+          transform: translateY(-1px) !important;
+        }
+
+        /* DEMON SLAYER THEME */
+        .form-page-theme-demon-slayer {
+          background-color: #120505 !important;
+          background-image: radial-gradient(circle at 50% 10%, #300a0a, #120505) !important;
+          position: relative;
+        }
+        .form-page-theme-demon-slayer .field-card-wrapper {
+          background: rgba(30, 12, 12, 0.9) !important;
+          border: 1px solid #E63946 !important;
+          border-radius: 6px !important;
+          box-shadow: 0 4px 20px rgba(230, 57, 70, 0.1) !important;
+          padding: 1.5rem !important;
+        }
+        .form-page-theme-demon-slayer .field-card-wrapper:hover {
+          box-shadow: 0 8px 30px rgba(230, 57, 70, 0.25) !important;
+          border-color: #ff5e6c !important;
+        }
+        .form-page-theme-demon-slayer .field-label {
+          color: #ffdddd !important;
+          text-shadow: 0 0 8px rgba(230, 57, 70, 0.5) !important;
+        }
+        .form-page-theme-demon-slayer .field-description {
+          color: #b08888 !important;
+        }
+        .form-page-theme-demon-slayer input[type="text"],
+        .form-page-theme-demon-slayer input[type="email"],
+        .form-page-theme-demon-slayer input[type="url"],
+        .form-page-theme-demon-slayer input[type="number"],
+        .form-page-theme-demon-slayer input[type="date"],
+        .form-page-theme-demon-slayer input[type="time"],
+        .form-page-theme-demon-slayer textarea,
+        .form-page-theme-demon-slayer select {
+          background: #1b0a0a !important;
+          border: 1px solid #5a2020 !important;
+          color: #ffdddd !important;
+          border-radius: 6px !important;
+        }
+        .form-page-theme-demon-slayer input:focus,
+        .form-page-theme-demon-slayer textarea:focus,
+        .form-page-theme-demon-slayer select:focus {
+          border-color: #E63946 !important;
+          box-shadow: 0 0 10px rgba(230, 57, 70, 0.6) !important;
+          outline: none !important;
+        }
+        .form-page-theme-demon-slayer .option-label {
+          background: #251010 !important;
+          border: 1px solid #4a1a1a !important;
+          border-radius: 6px !important;
+        }
+        .form-page-theme-demon-slayer .option-label:hover {
+          border-color: #E63946 !important;
+        }
+        .form-page-theme-demon-slayer .option-label-selected {
+          background: rgba(230, 57, 70, 0.15) !important;
+          border-color: #E63946 !important;
+          box-shadow: 0 0 10px rgba(230, 57, 70, 0.3) !important;
+        }
+        .form-page-theme-demon-slayer .scale-button {
+          background: #251010 !important;
+          border: 1px solid #4a1a1a !important;
+          color: #ffdddd !important;
+        }
+        .form-page-theme-demon-slayer .scale-button-selected {
+          background: linear-gradient(135deg, #E63946, #e67e22) !important;
+          border-color: #E63946 !important;
+          box-shadow: 0 0 15px rgba(230, 57, 70, 0.5) !important;
+        }
+        .form-page-theme-demon-slayer .submit-button {
+          background: linear-gradient(135deg, #E63946, #FF9F1C, #E63946) !important;
+          background-size: 200% auto !important;
+          color: #ffffff !important;
+          font-weight: 800 !important;
+          border-radius: 6px !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.05em !important;
+          box-shadow: 0 4px 15px rgba(230, 57, 70, 0.4) !important;
+          transition: all 0.4s ease !important;
+        }
+        .form-page-theme-demon-slayer .submit-button:hover:not(:disabled) {
+          background-position: right center !important;
+          box-shadow: 0 6px 20px rgba(255, 159, 28, 0.6) !important;
+        }
+
+        /* OCEAN BREEZE THEME */
+        .form-page-theme-ocean-breeze {
+          background-color: #eef8fc !important;
+          background-image: radial-gradient(at 0% 0%, #dbf0f9 0px, transparent 50%),
+                            radial-gradient(at 100% 100%, #e0f2fe 0px, transparent 50%) !important;
+        }
+        .form-page-theme-ocean-breeze .field-card-wrapper {
+          background: rgba(255, 255, 255, 0.85) !important;
+          border: 1px solid rgba(14, 165, 233, 0.15) !important;
+          border-radius: 20px !important;
+          box-shadow: 0 10px 30px rgba(14, 165, 233, 0.05), inset 0 2px 4px rgba(255,255,255,0.6) !important;
+          backdrop-filter: blur(12px) !important;
+          padding: 1.5rem !important;
+        }
+        .form-page-theme-ocean-breeze .field-card-wrapper:hover {
+          box-shadow: 0 15px 40px rgba(14, 165, 233, 0.1) !important;
+          transform: translateY(-2px) !important;
+        }
+        .form-page-theme-ocean-breeze .field-label {
+          color: #0f172a !important;
+          font-family: 'Outfit', 'Inter', sans-serif !important;
+        }
+        .form-page-theme-ocean-breeze .field-description {
+          color: #475569 !important;
+        }
+        .form-page-theme-ocean-breeze input[type="text"],
+        .form-page-theme-ocean-breeze input[type="email"],
+        .form-page-theme-ocean-breeze input[type="url"],
+        .form-page-theme-ocean-breeze input[type="number"],
+        .form-page-theme-ocean-breeze input[type="date"],
+        .form-page-theme-ocean-breeze input[type="time"],
+        .form-page-theme-ocean-breeze textarea,
+        .form-page-theme-ocean-breeze select {
+          background: #f8fafc !important;
+          border: 1px solid #e2e8f0 !important;
+          border-bottom: 3px solid #cbd5e1 !important;
+          color: #0f172a !important;
+          border-radius: 8px !important;
+        }
+        .form-page-theme-ocean-breeze input:focus,
+        .form-page-theme-ocean-breeze textarea:focus,
+        .form-page-theme-ocean-breeze select:focus {
+          border-color: #0EA5E9 !important;
+          border-bottom-color: #14B8A6 !important;
+          box-shadow: 0 4px 12px rgba(14, 165, 233, 0.08) !important;
+          outline: none !important;
+        }
+        .form-page-theme-ocean-breeze .option-label {
+          background: #f8fafc !important;
+          border: 1px solid #e2e8f0 !important;
+          border-radius: 12px !important;
+        }
+        .form-page-theme-ocean-breeze .option-label:hover {
+          border-color: #0EA5E9 !important;
+        }
+        .form-page-theme-ocean-breeze .option-label-selected {
+          background: rgba(14, 165, 233, 0.08) !important;
+          border-color: #0EA5E9 !important;
+          box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1) !important;
+        }
+        .form-page-theme-ocean-breeze .scale-button {
+          background: #f8fafc !important;
+          border: 1px solid #e2e8f0 !important;
+          color: #0f172a !important;
+          border-radius: 10px !important;
+        }
+        .form-page-theme-ocean-breeze .scale-button-selected {
+          background: linear-gradient(135deg, #0EA5E9, #14B8A6) !important;
+          border-color: #0EA5E9 !important;
+          color: #ffffff !important;
+          box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3) !important;
+        }
+        .form-page-theme-ocean-breeze .submit-button {
+          background: linear-gradient(135deg, #0EA5E9, #14B8A6) !important;
+          color: #ffffff !important;
+          border-radius: 30px !important;
+          font-weight: 700 !important;
+          box-shadow: 0 6px 20px rgba(14, 165, 233, 0.25) !important;
+        }
+        .form-page-theme-ocean-breeze .submit-button:hover:not(:disabled) {
+          box-shadow: 0 8px 25px rgba(20, 184, 166, 0.4) !important;
+          transform: translateY(-1px) !important;
+        }
+
+        /* MIDNIGHT THEME */
+        .form-page-theme-midnight {
+          background-color: #080810 !important;
+          background-image: radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.12) 0px, transparent 50%),
+                            radial-gradient(at 100% 100%, rgba(167, 139, 250, 0.08) 0px, transparent 50%) !important;
+        }
+        .form-page-theme-midnight .field-card-wrapper {
+          background: rgba(26, 26, 46, 0.45) !important;
+          border: 1px solid rgba(255, 255, 255, 0.08) !important;
+          border-radius: 14px !important;
+          box-shadow: 0 8px 32px 0 rgba(139, 92, 246, 0.08), inset 0 1px 0px rgba(255,255,255,0.05) !important;
+          backdrop-filter: blur(16px) !important;
+          padding: 1.5rem !important;
+        }
+        .form-page-theme-midnight .field-card-wrapper:hover {
+          border-color: rgba(139, 92, 246, 0.25) !important;
+          box-shadow: 0 12px 40px 0 rgba(139, 92, 246, 0.15) !important;
+        }
+        .form-page-theme-midnight .field-label {
+          color: #f0f0ff !important;
+          text-shadow: 0 0 10px rgba(139, 92, 246, 0.2) !important;
+        }
+        .form-page-theme-midnight .field-description {
+          color: #9090b0 !important;
+        }
+        .form-page-theme-midnight input[type="text"],
+        .form-page-theme-midnight input[type="email"],
+        .form-page-theme-midnight input[type="url"],
+        .form-page-theme-midnight input[type="number"],
+        .form-page-theme-midnight input[type="date"],
+        .form-page-theme-midnight input[type="time"],
+        .form-page-theme-midnight textarea,
+        .form-page-theme-midnight select {
+          background: rgba(15, 15, 30, 0.6) !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          color: #f0f0ff !important;
+          border-radius: 10px !important;
+        }
+        .form-page-theme-midnight input:focus,
+        .form-page-theme-midnight textarea:focus,
+        .form-page-theme-midnight select:focus {
+          border-color: #8B5CF6 !important;
+          box-shadow: 0 0 15px rgba(139, 92, 246, 0.3) !important;
+          outline: none !important;
+        }
+        .form-page-theme-midnight .option-label {
+          background: rgba(20, 20, 38, 0.4) !important;
+          border: 1px solid rgba(255, 255, 255, 0.05) !important;
+          border-radius: 10px !important;
+        }
+        .form-page-theme-midnight .option-label:hover {
+          border-color: rgba(139, 92, 246, 0.2) !important;
+        }
+        .form-page-theme-midnight .option-label-selected {
+          background: rgba(139, 92, 246, 0.1) !important;
+          border-color: #8B5CF6 !important;
+          box-shadow: 0 0 15px rgba(139, 92, 246, 0.15) !important;
+        }
+        .form-page-theme-midnight .scale-button {
+          background: rgba(20, 20, 38, 0.4) !important;
+          border: 1px solid rgba(255, 255, 255, 0.05) !important;
+          color: #f0f0ff !important;
+        }
+        .form-page-theme-midnight .scale-button-selected {
+          background: linear-gradient(135deg, #8B5CF6, #A78BFA) !important;
+          border-color: #8B5CF6 !important;
+          box-shadow: 0 0 15px rgba(139, 92, 246, 0.4) !important;
+        }
+        .form-page-theme-midnight .submit-button {
+          background: linear-gradient(135deg, #8B5CF6, #6366f1) !important;
+          color: #ffffff !important;
+          border-radius: 10px !important;
+          font-weight: 700 !important;
+          box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3) !important;
+        }
+        .form-page-theme-midnight .submit-button:hover:not(:disabled) {
+          box-shadow: 0 6px 25px rgba(139, 92, 246, 0.5) !important;
         }
       `}</style>
 
@@ -773,6 +1314,7 @@ export default function PublicFormPage() {
               <div
                 key={field.id}
                 id={`field-${field.id}`}
+                className="field-card-wrapper"
                 style={{
                   animation: `fadeInUp 0.45s ease ${Math.min(i * 0.06, 0.5)}s forwards`,
                   opacity: 0,
@@ -780,7 +1322,7 @@ export default function PublicFormPage() {
               >
                 {field.type !== 'statement' && field.type !== 'section_break' && (
                   <label style={{ display: 'block', marginBottom: '0.75rem' }}>
-                    <span style={{ fontSize: '1rem', fontWeight: 600, color: text }}>
+                    <span className="field-label" style={{ fontSize: '1rem', fontWeight: 600, color: text }}>
                       {field.label}
                     </span>
                     {field.isRequired && (
@@ -788,6 +1330,7 @@ export default function PublicFormPage() {
                     )}
                     {field.description && (
                       <span
+                        className="field-description"
                         style={{
                           display: 'block',
                           color: textMuted,
@@ -826,6 +1369,7 @@ export default function PublicFormPage() {
           <button
             type="submit"
             disabled={isSubmitting}
+            className="submit-button"
             style={{
               marginTop: '2.5rem',
               padding: '1rem 2rem',

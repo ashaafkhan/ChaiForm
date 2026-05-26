@@ -22,7 +22,7 @@ const THEMES = [
 
 const STATS = [
   { value: '10K+', label: 'Forms Created' },
-  { value: '14', label: 'Unique Themes' },
+  { value: '6', label: 'Unique Themes' },
   { value: '20+', label: 'Field Types' },
   { value: '100%', label: 'Type-Safe' },
 ];
@@ -93,7 +93,7 @@ export default function LandingPage() {
           </h1>
 
           <p style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '2.5rem', maxWidth: '600px', margin: '0 auto 2.5rem' }}>
-            ChaiForms is a production-grade Typeform alternative. Create stunning forms with 14 anime/movie themes, real-time analytics, conditional logic, and instant sharing — in minutes.
+            ChaiForms is a production-grade Typeform alternative. Create stunning forms with 6 anime/movie themes, real-time analytics, conditional logic, and instant sharing — in minutes.
           </p>
 
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
@@ -127,7 +127,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: '1100px', margin: '0 auto', textAlign: 'center' }}>
           <div className="badge badge-orange" style={{ marginBottom: '1rem', display: 'inline-flex' }}>🎨 Themes</div>
           <h2 style={{ fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', fontWeight: 800, fontFamily: 'Poppins, sans-serif', marginBottom: '1rem' }}>
-            14 Stunning Themes
+            6 Stunning Themes
           </h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '3rem', fontSize: '1rem' }}>
             From anime aesthetics to minimal dark — every form tells a story.
