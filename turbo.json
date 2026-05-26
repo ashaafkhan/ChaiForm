@@ -1,0 +1,46 @@
+{
+  "globalDependencies": ["**/.env.local"],
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "dist/**", ".tsbuildinfo"],
+      "cache": true
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "outputs": []
+    },
+    "lint": {
+      "outputs": [],
+      "cache": true
+    },
+    "typecheck": {
+      "outputs": [],
+      "cache": true,
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "outputs": ["coverage/**"],
+      "cache": true
+    },
+    "migrate": {
+      "cache": false,
+      "outputs": []
+    },
+    "seed": {
+      "cache": false,
+      "outputs": [],
+      "dependsOn": ["migrate"]
+    },
+    "studio": {
+      "cache": false,
+      "persistent": true,
+      "outputs": []
+    },
+    "clean": {
+      "cache": false,
+      "outputs": []
+    }
+  }
+}

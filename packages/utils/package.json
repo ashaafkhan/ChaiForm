@@ -1,0 +1,19 @@
+{
+  "name": "@chaiforms/utils",
+  "version": "1.0.0",
+  "description": "Shared utility functions",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "date-fns": "^2.30.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

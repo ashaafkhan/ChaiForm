@@ -1,0 +1,9 @@
+packages:
+  - 'apps/web'
+  - 'apps/api'
+  - 'packages/db'
+  - 'packages/schemas'
+  - 'packages/trpc'
+  - 'packages/ui'
+  - 'packages/email'
+  - 'packages/utils'

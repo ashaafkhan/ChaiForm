@@ -1,0 +1,22 @@
+{
+  "name": "@chaiforms/trpc",
+  "version": "1.0.0",
+  "description": "tRPC router types and client factory",
+  "private": true,
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@trpc/client": "^11.0.0-rc.461",
+    "@trpc/react-query": "^11.0.0-rc.461",
+    "@trpc/server": "^11.0.0-rc.461"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

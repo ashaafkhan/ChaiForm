@@ -1,0 +1,33 @@
+{
+  "name": "@chaiforms/api",
+  "version": "1.0.0",
+  "description": "ChaiForms API Server",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chaiforms/db": "*",
+    "@chaiforms/schemas": "*",
+    "@chaiforms/utils": "*",
+    "@chaiforms/email": "*",
+    "@hono/node-server": "^1.10.1",
+    "@scalar/hono-api-reference": "^0.10.19",
+    "@trpc/server": "^11.0.0-rc.461",
+    "hono": "^4.2.10",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
