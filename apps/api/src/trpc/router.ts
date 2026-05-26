@@ -4,6 +4,7 @@ import { formsRouter } from './routers/forms';
 import { fieldsRouter } from './routers/fields';
 import { responsesRouter } from './routers/responses';
 import { analyticsRouter } from './routers/analytics';
+import { analyticsAdvancedRouter } from './routers/analytics-advanced';
 import { themesRouter } from './routers/themes';
 import { emailsRouter } from './routers/emails';
 
@@ -13,6 +14,7 @@ export const appRouter = router({
   fields: fieldsRouter,
   responses: responsesRouter,
   analytics: analyticsRouter,
+  analyticsAdvanced: analyticsAdvancedRouter,
   themes: themesRouter,
   emails: emailsRouter,
 });
