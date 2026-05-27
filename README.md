@@ -1,18 +1,18 @@
 # ☕ ChaiForms — Next-Gen Interactive Form Builder SaaS
 
-> A high-fidelity, type-safe Form Builder SaaS (Typeform alternative) built with Turborepo, Next.js 14, Hono, tRPC v11, and Drizzle ORM. Featuring premium, interactive, dynamic form themes with live customizers, debounced database sync, and real-time analytics.
+> A highly immersive, premium, and type-safe Form Builder SaaS (Typeform alternative) built with Turborepo, Next.js 14, Hono, tRPC v11, and Drizzle ORM. Featuring premium, interactive, dynamic form themes with live customizers, debounced database sync, and real-time analytics.
 
 ---
 
 ## 🔗 Live & Quick Links
 
-| Resource | Location / URL |
-|----------|----------------|
-| 🌐 **Live Website** | [chaiform.ashaaf.in](https://chaiform.ashaaf.in) |
-| 📡 **API Backend** | `https://api.chaiform.ashaaf.in` (Deployed on Render) |
-| 📖 **Scalar API Docs** | `https://api.chaiform.ashaaf.in/docs` |
-| 💻 **Local Frontend** | `http://localhost:3000` |
-| 🔌 **Local API Server** | `http://localhost:3001` |
+| Resource | Location / URL | Description |
+|:---|:---|:---|
+| 🌐 **Live Website** | [chaiform.ashaaf.in](https://chaiform.ashaaf.in) | Production Landing Page & Creator Hub |
+| 📡 **API Backend** | `https://api.chaiform.ashaaf.in` | Hono Backend Server (Render) |
+| 📖 **Scalar API Docs** | `https://api.chaiform.ashaaf.in/docs` | Interactive OpenAPI playground |
+| 💻 **Local Frontend** | `http://localhost:3000` | Local Next.js Workspace |
+| 🔌 **Local API Server** | `http://localhost:3001` | Local Hono tRPC server |
 
 ---
 
@@ -32,171 +32,280 @@ Admin Account:
 
 ---
 
+## 🚀 Detailed Features & Screen Breakdowns
+
+### 1. Marketing & Landing Page Showcase (`/`)
+*   **Hero Section**: Modern dark mode UI with glassmorphic cards, highlighting key performance metrics and the "6 Stunning Themes".
+*   **Interactive Theme Showcase**: Interactive mock form next to the theme selection cards. Visitors can click on any theme card (Matrix, Cyberpunk, Interstellar, etc.) and immediately see the live mock form transform its typography, backgrounds, gridlines, inputs, buttons, and animations on the spot.
+
+### 2. Creator Dashboard (`/dashboard`)
+*   **Form Management**: Overview cards for total forms, cumulative responses, and average completion rate.
+*   **Form List Grid**: Interactive list showing form status (Draft, Published, Archived), visibility, created date, and response count. Supports duplication, deletion, archiving, and editing.
+*   **Explore Hub (`/explore`)**: Community-wide public forms gallery allowing creators to test other public forms and clone templates.
+
+### 3. Workspace Editor Panel (`/forms/[formId]/edit`)
+*   **Live Drag-and-Drop Canvas**: Add, edit, delete, and re-order 18+ input types (Short Text, Long Text, Email, Number, Ratings, Select Checkboxes, Dropdowns, Date-pickers, File uploads, and more) with immediate live previews.
+*   **Tabbed sidebar panel ("Fields" vs "Design")**:
+    *   **Fields Tab**: Configure field label, placeholders, helper description texts, required toggles, validation rules (minimum/maximum bounds, regex expressions, customized error messages), and conditional visibility logic. Clicking a field on the canvas instantly focuses this tab.
+    *   **Design Tab**: Accesses the `ThemeSelector` and `ThemeCustomizer` components. Let's creators toggle between the 6 premium presets or define custom overrides (background colors, primary/secondary accents, text colors, corner roundness, focus ring glows) which automatically sync to the database via debounced queries.
+
+### 4. Share & Embed Workspace (`/forms/[formId]/share`)
+*   **Custom Slugs**: Update the default unique ID slug to a vanity url (e.g. `/f/my-custom-feedback`).
+*   **Direct Sharing**: One-click clipboard copy for direct form links.
+*   **QR Code Generator**: Generates high-definition downloadable QR codes matching the form's custom colors.
+*   **Embed Options**: Code snippets for responsive iframe embedding.
+
+### 5. Submissions Workspace (`/forms/[formId]/responses`)
+*   **Submissions Grid**: Paginated grid of all completed form answers with search capabilities.
+*   **Details Drawer**: Slide-out panel to inspect individual response metrics, user IP, user-agent, completion duration, and comprehensive field-by-field answers.
+*   **CSV Exporter**: Generates instant structured CSV exports of all response data.
+
+### 6. Real-Time Analytics Panel (`/forms/[formId]/analytics`)
+*   **Conversion Metrics**: Visualizes views vs submissions, calculating precise completion rates.
+*   **Engagement Charts**: Custom Recharts diagrams showing submission trends over time, device breakdowns (Desktop vs Mobile), and browser distributions.
+*   **Duration Metrics**: Displays average completion time in seconds/minutes to pinpoint friction.
+
+### 7. Form Security Settings (`/settings/security`)
+*   **Password Protection**: Restricts form accessibility using secure password checks.
+*   **Availability Enforcements**: Set expiration dates/times or response submission ceilings (e.g., close form after 500 responses).
+*   **Rate Limits**: Configures Redis-based submit throttling per IP.
+
+---
+
 ## 🎨 The 6 Premium "Crazy" Interactive Themes
 
-ChaiForms features six highly immersive, theme-specific styles with custom animations, custom focus states, typography, glassmorphism, scanlines, and glow indicators that load reactively based on form selection.
-
-| Theme | Identifier | Key Visual Highlights |
-|---|---|---|
-| 🟢 **The Matrix** | `the-matrix` | Monospaced Courier typography, bright lime green text-shadow glows, digital rain scanlines, retro-glowing buttons, and custom borderless green-accented inputs. |
-| ⚡ **Cyberpunk** | `cyberpunk` | Sharp angles (0px border-radius), dual neon pink and cyan border glows, neon cybernetic grid lines, and glowing linear-gradient submit controls. |
-| 🌌 **Interstellar** | `interstellar` | Deep cosmic radial starfields, elegant serif headings, warm amber/gold glows, and highly polished frosted glass containers. |
-| 🔥 **Demon Slayer** | `demon-slayer` | Deep charcoal cards backed by burning crimson radial gradients, red-hot focus glows, and custom flame-styled headers and buttons. |
-| 🌊 **Ocean Breeze** | `ocean-breeze` | Rounded card corners (`20px`), bottom-border input fields that glow teal on focus, and pill-shaped teal/blue gradient submit buttons. |
-| 🔮 **Midnight** | `midnight` | Velvet violet backgrounds, premium glassmorphism containers (`backdrop-filter`), and deep royal purple ambient glows. |
-
----
-
-## ⚡ Tech Stack & Architecture
-
-ChaiForms uses a type-safe, modular monorepo architecture:
+ChaiForms applies high-fidelity styling for each theme using custom parent CSS selectors (`.form-page-theme-{slug}`). Below is the style spec sheet:
 
 ```
-                  ┌──────────────────────┐
-                  │   Next.js Frontend   │
-                  │     (apps/web)       │
-                  └──────────┬───────────┘
-                             │
-                      tRPC v11 Queries &
-                         Mutations
-                             │
-                             ▼
-                  ┌──────────────────────┐
-                  │  Hono API + tRPC     │
-                  │     (apps/api)       │
-                  └──────────┬───────────┘
-                             │
-                     Drizzle ORM Queries
-                             │
-                             ▼
-                  ┌──────────────────────┐
-                  │ PostgreSQL Database  │
-                  └──────────────────────┘
-```
-
-*   **Monorepo Core**: [Turborepo](https://turbo.build/) for lightning-fast caching and workspace compilation.
-*   **Frontend App**: **Next.js 14** (App Router, Server Components) styled with **Vanilla CSS** (for theme overrides) and **Tailwind CSS / shadcn/ui** (for dashboard components).
-*   **API Server**: **Hono** combined with **tRPC v11** for end-to-end type safety between client and server.
-*   **Database & ORM**: **Drizzle ORM** with a **PostgreSQL** client database layer.
-*   **Bundler & Compiler**: `esbuild` for creating optimized, standalone production API builds.
-*   **Verification Utilities**: **Zod** schema validations shared across web and API workspaces.
-
----
-
-## 📁 Project Structure
-
-```
-chaiforms/
-├── apps/
-│   ├── web/               # Next.js frontend (Creator dashboard + Public forms)
-│   └── api/               # Hono backend + tRPC server running on Node
-├── packages/
-│   ├── db/                # PostgreSQL schema definitions, Drizzle migrations, & seed scripts
-│   ├── schemas/           # Shared Zod validation schemas (e.g. form fields, responses)
-│   ├── trpc/              # Router type signatures & client factory setup
-│   ├── ui/                # Shared layout & button components
-│   ├── email/             # Resend email templates & configuration
-│   └── utils/             # Helper utilities and type conversions
-├── tsconfig.base.json     # Base TypeScript compiler settings
-├── turbo.json             # Turborepo task pipeline config
-└── pnpm-workspace.yaml    # Workspace packaging map
+                            THEME VISUAL SYSTEM
+ ┌───────────────────┬────────────────────────────────────────────────────────┐
+ │ Theme Name        │ CSS Design & Animation Details                         │
+ ├───────────────────┼────────────────────────────────────────────────────────┤
+ │ 🟢 The Matrix     │ - Monospaced Courier font family                       │
+ │                   │ - Glowing green font text-shadows                      │
+ │                   │ - Repeating linear-gradient terminal scanlines         │
+ │                   │ - Borderless neon green inputs & retro submit buttons │
+ ├───────────────────┼────────────────────────────────────────────────────────┤
+ │ ⚡ Cyberpunk      │ - Sharp 0px borders (pure futuristic wireframe)        │
+ │                   │ - Dual neon-pink & neon-cyan glow borders              │
+ │                   │ - Glowing linear gradient buttons with glitch hover    │
+ ├───────────────────┼────────────────────────────────────────────────────────┤
+ │ 🌌 Interstellar   │ - Cosmical radial starfield dark gradients             │
+ │                   │ - Serif headings & elegant golden glows                │
+ │                   │ - Frosted glass containers (backdrop-filter: blur)    │
+ ├───────────────────┼────────────────────────────────────────────────────────┤
+ │ 🔥 Demon Slayer   │ - Burning crimson-orange radial backgrounds           │
+ │                   │ - Red-hot focus borders & flame-styled headers        │
+ ├───────────────────┼────────────────────────────────────────────────────────┤
+ │ 🌊 Ocean Breeze   │ - Ultra rounded corners (border-radius: 20px)          │
+ │                   │ - Deep-sea teal accents & bottom-border only inputs    │
+ ├───────────────────┼────────────────────────────────────────────────────────┤
+ │ 🔮 Midnight       │ - Royal velvet violet gradients                        │
+ │                   │ - Deep purple soft ambient shadows & glassmorphism    │
+ └───────────────────┴────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🛠️ Installation & Local Setup
+## 📡 Database Schema Details (Drizzle ORM)
+
+The database schema utilizes Postgres-specific data types and relational mappings:
+
+```sql
+users (Form Creators)
+  ├── id: uuid (Primary Key)
+  ├── email: varchar(255) (Unique)
+  ├── passwordHash: text
+  └── createdAt: timestamp
+
+forms (Form Configuration & Security)
+  ├── id: uuid (Primary Key)
+  ├── creatorId: uuid (References users.id)
+  ├── title: varchar(255)
+  ├── slug: varchar(255) (Unique, Index)
+  ├── description: text
+  ├── themeId: uuid (References themes.id)
+  ├── customThemeConfig: jsonb (Stores custom picker colors & radii overrides)
+  ├── status: enum ('draft', 'published', 'archived')
+  ├── isPublic: boolean (Toggles visibility in Explore page)
+  ├── passwordHash: text (Optional, for password-protected forms)
+  ├── expiresAt: timestamp (Optional, expiration check)
+  ├── limitCount: integer (Optional, submission ceiling)
+  └── createdAt / updatedAt: timestamp
+
+fields (Form Fields)
+  ├── id: uuid (Primary Key)
+  ├── formId: uuid (References forms.id on delete cascade)
+  ├── type: varchar(50) (e.g. text, rating, date)
+  ├── label: text
+  ├── placeholder: text
+  ├── description: text
+  ├── required: boolean
+  ├── order: integer (Used for client ordering)
+  ├── validation: jsonb (Min/max length, bounds, regex pattern)
+  └── logicRules: jsonb (Conditional visibility logic)
+
+responses (Submitted Forms)
+  ├── id: uuid (Primary Key)
+  ├── formId: uuid (References forms.id on delete cascade)
+  ├── userIp: varchar(45) (For rate limiting and geo analysis)
+  ├── userAgent: text (For device charts)
+  ├── completedAt: timestamp
+  └── createdAt: timestamp
+
+answers (Individual field entries)
+  ├── id: uuid (Primary Key)
+  ├── responseId: uuid (References responses.id on delete cascade)
+  ├── fieldId: uuid (References fields.id on delete cascade)
+  └── value: jsonb (Holds responses based on field types)
+
+themes (Theme Presets)
+  ├── id: uuid (Primary Key)
+  ├── name: varchar(100)
+  ├── slug: varchar(100) (Unique)
+  ├── config: jsonb (Preset styles)
+  └── isPublic: boolean
+```
+
+---
+
+## 🔄 Core Request-Response Flows
+
+### 1. Form Submission & Zod Schema Validation
+```
+  [Client Form App]                     [Hono API Backend]                 [Database]
+          │                                     │                              │
+          │ 1. Map answers record to            │                              │
+          │    { fieldId, value }[]             │                              │
+          ├────────────────────────────────────>│                              │
+          │    Mutate tRPC responses.submit     │                              │
+          │                                     │ 2. Zod validation parser     │
+          │                                     │    & Security/Limit checks   │
+          │                                     ├───────────────┐              │
+          │                                     │               │              │
+          │                                     │<──────────────┘              │
+          │                                     │                              │
+          │                                     │ 3. Insert response record    │
+          │                                     ├─────────────────────────────>│
+          │                                     │ 4. Batch insert answers      │
+          │                                     ├─────────────────────────────>│
+          │                                     │                              │
+          │ 5. Trigger email alert (optional)   │                              │
+          │<────────────────────────────────────┤                              │
+          │                                     │                              │
+```
+
+### 2. Live Theme Customizer Database Sync
+```
+  [Creator Customize Sidebar]                   [Hono API Backend]                 [Database]
+          │                                     │                              │
+          │ 1. Modify picker (e.g. accentColor) │                              │
+          │                                     │                              │
+          │ 2. Debounce trigger (1000ms)        │                              │
+          ├────────────────────────────────────>│                              │
+          │    Mutate tRPC themes.applyToForm   │                              │
+          │                                     │ 3. Update forms table        │
+          │                                     │    set customThemeConfig     │
+          │                                     ├─────────────────────────────>│
+          │                                     │                              │
+```
+
+---
+
+## 🛠️ Local Development & Operations
 
 ### Prerequisites
 *   Node.js **≥ 18.0.0**
 *   pnpm **≥ 8.0.0**
-*   A running PostgreSQL instance (local or via Neon/Supabase)
+*   PostgreSQL
 
-### 1. Clone & Install
+### Initial Workspace Configuration
 ```bash
 # Clone the repository
 git clone https://github.com/ashaafkhan/ChaiForm.git
 cd ChaiForm
 
-# Install dependencies
+# Install package dependencies
 pnpm install
+
+# Set up local environment variables
+cp .env.example .env.local
 ```
 
-### 2. Configure Environment Variables
-Create a `.env.local` file in the root workspace (and matching files inside `apps/web` and `apps/api` if necessary, or simply declare them in your system environment):
-
-```env
-# Database Credentials
-DATABASE_URL="postgresql://username:password@localhost:5432/chaiforms"
-
-# Server Ports & URLs
-PORT=3001
-FRONTEND_URL="http://localhost:3000"
-NEXT_PUBLIC_API_URL="http://localhost:3001"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-
-# Authentication Secrets
-JWT_SECRET="your-super-secret-key-here"
-
-# Email Configuration (Resend)
-RESEND_API_KEY="re_your_api_key"
-
-# Redis Configuration (For Rate Limiting)
-UPSTASH_REDIS_REST_URL="https://your-redis-url.upstash.io"
-UPSTASH_REDIS_REST_TOKEN="your_redis_token"
-```
-
-### 3. Database Migration & Seeding
+### Database Migration & Seeding
 ```bash
-# Push database schemas
+# Push database schemas to your Postgres instance
 pnpm db:migrate
 
 # Seed standard schemas and theme presets
 pnpm db:seed
 ```
 
-### 4. Running the Development Servers
+### Run Dev Environment
 ```bash
-# Boot the Next.js dev server & the Hono API watch server in parallel
+# Spin up both next.js frontend and hono api watch servers
 pnpm dev
 
-# - Frontend will run at: http://localhost:3000
-# - Backend API will run at: http://localhost:3001
-# - Interactive API docs will run at: http://localhost:3001/docs
+# Main addresses:
+# - Frontend: http://localhost:3000
+# - API Backend: http://localhost:3001
+# - Scalar Docs: http://localhost:3001/docs
+```
+
+### Monorepo Validation Commands
+```bash
+# Run lint check
+pnpm lint
+
+# Run type-checks across all packages
+pnpm typecheck
+
+# Build the entire monorepo
+pnpm build
 ```
 
 ---
 
-## 📦 Production Bundling & Deployment Fix
+## 📦 Production Bundling & Deployment Guides
 
-To ensure a seamless production deployment on platforms like Render, the API backend uses a custom build compiler setup:
+### Backend API App Bundler Config (`esbuild`)
+Due to the monorepo structure, relative extensionless imports (e.g. `import { router } from './init'`) and typescript package references (`packages/db/src/index.ts`) will fail to run natively under Node.js ESM. 
 
-### The Challenge
-Standard Node.js ESM (`"type": "module"`) requires explicit extensions in file imports (e.g. `import './foo.js'`). TypeScript compiles relative paths without adding extensions. This normally causes Node.js deployments to crash with `ERR_MODULE_NOT_FOUND`. Furthermore, monorepo dependencies like `@chaiforms/db` point directly to `.ts` files, raising `ERR_UNKNOWN_FILE_EXTENSION`.
-
-### The Solution
-We integrated `esbuild` as the compiler bundle step in [apps/api/package.json](apps/api/package.json):
-```json
-"build": "tsc && esbuild src/index.ts --bundle --platform=node --target=node22 --outfile=dist/index.js --format=esm --external:hono --external:@hono/node-server --external:@scalar/hono-api-reference --external:@trpc/server --external:bcryptjs --external:drizzle-orm --external:jsonwebtoken --external:zod --external:pg"
+To solve this, we configured `esbuild` to compile `apps/api/src/index.ts` into a self-contained bundle `dist/index.js` while leaving third-party node modules external:
+```bash
+npx esbuild src/index.ts --bundle --platform=node --target=node22 --outfile=dist/index.js --format=esm --external:hono --external:@hono/node-server --external:@scalar/hono-api-reference --external:@trpc/server --external:bcryptjs --external:drizzle-orm --external:jsonwebtoken --external:zod --external:pg
 ```
-*   **`tsc`**: Verifies type safety and enforces compilation standards.
-*   **`esbuild`**: Bundles all local monorepo typescript imports and dependencies into a single production-ready `dist/index.js` file, while excluding external npm dependencies.
-*   **Result**: Zero-config startup in native Node.js environments.
+This is fully automated under the `build` script in `apps/api/package.json`.
 
 ---
 
-## 🚀 Key Features
+### Step-by-Step Deployment Instructions
 
-*   **Design & Fields Workspace Split**: Tabbed side panel ("Fields" vs "Design") in the creator editor sidebar. Tab selection automatically transitions to the fields panel when modifying form fields in the live canvas.
-*   **Interactive Theme Customizer**: Real-time picker enabling creators to override defaults (e.g. Background Color, Text Color, Accent Colors, Border Radius) and save configurations safely with debounced db mutations.
-*   **Zod Schema Type-Safety**: Automated serialization mapping flat client-side responses to match Zod backend validation constraints, preventing form submission errors.
-*   **Fully Responsive & Interactive Landing Showcase**: Interactive theme cards on the marketing landing page that dynamically render the active theme design to preview forms on-click.
-*   **Scalar Interactive Docs**: Dynamic OpenAPI visual references for all endpoints accessible on `/docs`.
+#### 1. Deploying the Backend API (Render)
+1. Log in to the [Render Dashboard](https://dashboard.render.com/) and click **New > Web Service**.
+2. Link your Git repository.
+3. Configure the following parameters in the Web Service setup:
+   *   **Runtime**: `Node`
+   *   **Build Command**: `npx pnpm install --no-frozen-lockfile && npx pnpm run build --filter=@chaiforms/api`
+   *   **Start Command**: `node apps/api/dist/index.js`
+4. Add the following **Environment Variables**:
+   *   `NODE_VERSION`: `22.13.0`
+   *   `DATABASE_URL`: `your_postgresql_connection_string`
+   *   `FRONTEND_URL`: `https://chaiform.ashaaf.in`
+   *   `JWT_SECRET`: `your_random_jwt_secret`
+5. Click **Deploy Web Service**.
 
----
-
-## 🤝 Contribution & Maintenance
-
-This repository is maintained as a hackathon submission. For issues, optimization ideas, or pull requests, please open an issue in the repository.
+#### 2. Deploying the Frontend Web App (Vercel)
+1. Log in to [Vercel](https://vercel.com/) and click **Add New > Project**.
+2. Select your repository.
+3. Configure the project settings:
+   *   **Framework Preset**: `Next.js`
+   *   **Root Directory**: `apps/web` (Keep "Keep settings from root directory" disabled)
+   *   **Build Command**: `npx pnpm build --filter=@chaiforms/web...` (or standard next build)
+4. Add the following **Environment Variables**:
+   *   `NEXT_PUBLIC_API_URL`: `https://api.chaiform.ashaaf.in`
+   *   `NEXT_PUBLIC_APP_URL`: `https://chaiform.ashaaf.in`
+5. Click **Deploy**.
 
 ---
 
