@@ -100,12 +100,12 @@ export default function PublicFormPage() {
     }
   };
 
-  const validate = (): boolean => {
+  const validate = (currentAnswers: Record<string, unknown>): Record<string, string> => {
     const newErrors: Record<string, string> = {};
     const fieldList = (form?.fields || []) as FormField[];
     for (const field of fieldList) {
       if (field.isRequired) {
-        const val = answers[field.id];
+        const val = currentAnswers[field.id];
         if (
           val === undefined ||
           val === null ||
@@ -115,38 +115,53 @@ export default function PublicFormPage() {
           newErrors[field.id] = 'This field is required';
         }
       }
-      if (field.type === 'email' && answers[field.id]) {
+      if (field.type === 'email' && currentAnswers[field.id]) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(String(answers[field.id]))) {
+        if (!emailRegex.test(String(currentAnswers[field.id]))) {
           newErrors[field.id] = 'Please enter a valid email address';
         }
       }
-      if (field.type === 'url' && answers[field.id]) {
+      if (field.type === 'url' && currentAnswers[field.id]) {
         try {
-          new URL(String(answers[field.id]));
+          new URL(String(currentAnswers[field.id]));
         } catch {
           newErrors[field.id] = 'Please enter a valid URL';
         }
       }
     }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) {
-      const firstErrorId = Object.keys(errors)[0];
+    
+    const newErrors = validate(answers);
+    setErrors(newErrors);
+    
+    if (Object.keys(newErrors).length > 0) {
+      const firstErrorId = Object.keys(newErrors)[0];
       if (firstErrorId) {
         document.getElementById(`field-${firstErrorId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
       return;
     }
+
+    const mappedAnswers = Object.entries(answers)
+      .map(([fieldId, value]) => ({
+        fieldId,
+        value: value === undefined ? null : value,
+      }));
+
+    if (mappedAnswers.length === 0) {
+      alert('Please answer at least one question before submitting.');
+      return;
+    }
+
     setIsSubmitting(true);
     const completionTime = Math.round((Date.now() - startTime) / 1000);
     submitMutation.mutate({
       formId: form!.id,
-      answers: answers as any,
+      answers: mappedAnswers as any,
       completionTimeSeconds: completionTime,
       metadata: { sessionId: sessionId.current },
     });
