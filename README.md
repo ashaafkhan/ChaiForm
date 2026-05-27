@@ -1,19 +1,26 @@
-# ☕ ChaiForms — Form Builder SaaS
+# ☕ ChaiForms — Next-Gen Interactive Form Builder SaaS
 
-> Build beautiful, dynamic forms with real-time analytics, themed experiences, and instant sharing.
+> A high-fidelity, type-safe Form Builder SaaS (Typeform alternative) built with Turborepo, Next.js 14, Hono, tRPC v11, and Drizzle ORM. Featuring premium, interactive, dynamic form themes with live customizers, debounced database sync, and real-time analytics.
 
-## 🔗 Quick Links
+---
 
-| Resource | Location |
-|----------|----------|
-| 🌐 Frontend | `http://localhost:3000` |
-| 📡 API | `http://localhost:3001` |
-| 📖 API Docs | `http://localhost:3001/docs` |
-| 💻 GitHub | [Your Repo](https://github.com) |
+## 🔗 Live & Quick Links
 
-## 🔑 Demo Credentials
+| Resource | Location / URL |
+|----------|----------------|
+| 🌐 **Live Website** | [chaiform.ashaaf.in](https://chaiform.ashaaf.in) |
+| 📡 **API Backend** | `https://api.chaiform.ashaaf.in` (Deployed on Render) |
+| 📖 **Scalar API Docs** | `https://api.chaiform.ashaaf.in/docs` |
+| 💻 **Local Frontend** | `http://localhost:3000` |
+| 🔌 **Local API Server** | `http://localhost:3001` |
 
-```
+---
+
+## 🔑 Demo Access Credentials
+
+Feel free to log in with these pre-configured creator and admin accounts to explore the dashboard, design panel, and analytics.
+
+```yaml
 Creator Account:
   Email: demo@chaiforms.dev
   Password: ChaiForms2026!
@@ -23,237 +30,174 @@ Admin Account:
   Password: AdminChai2026!
 ```
 
-## 🚀 Tech Stack
+---
 
-- **Monorepo**: Turborepo
-- **Frontend**: Next.js 14 (App Router) + Tailwind CSS + shadcn/ui
-- **Backend**: Hono + tRPC v11
-- **Database**: PostgreSQL (Drizzle ORM)
-- **Validation**: Zod
-- **Auth**: Better Auth (coming soon)
-- **Email**: Resend + React Email
-- **API Docs**: Scalar
-- **Deployment**: Vercel + Railway
+## 🎨 The 6 Premium "Crazy" Interactive Themes
+
+ChaiForms features six highly immersive, theme-specific styles with custom animations, custom focus states, typography, glassmorphism, scanlines, and glow indicators that load reactively based on form selection.
+
+| Theme | Identifier | Key Visual Highlights |
+|---|---|---|
+| 🟢 **The Matrix** | `the-matrix` | Monospaced Courier typography, bright lime green text-shadow glows, digital rain scanlines, retro-glowing buttons, and custom borderless green-accented inputs. |
+| ⚡ **Cyberpunk** | `cyberpunk` | Sharp angles (0px border-radius), dual neon pink and cyan border glows, neon cybernetic grid lines, and glowing linear-gradient submit controls. |
+| 🌌 **Interstellar** | `interstellar` | Deep cosmic radial starfields, elegant serif headings, warm amber/gold glows, and highly polished frosted glass containers. |
+| 🔥 **Demon Slayer** | `demon-slayer` | Deep charcoal cards backed by burning crimson radial gradients, red-hot focus glows, and custom flame-styled headers and buttons. |
+| 🌊 **Ocean Breeze** | `ocean-breeze` | Rounded card corners (`20px`), bottom-border input fields that glow teal on focus, and pill-shaped teal/blue gradient submit buttons. |
+| 🔮 **Midnight** | `midnight` | Velvet violet backgrounds, premium glassmorphism containers (`backdrop-filter`), and deep royal purple ambient glows. |
+
+---
+
+## ⚡ Tech Stack & Architecture
+
+ChaiForms uses a type-safe, modular monorepo architecture:
+
+```
+                  ┌──────────────────────┐
+                  │   Next.js Frontend   │
+                  │     (apps/web)       │
+                  └──────────┬───────────┘
+                             │
+                      tRPC v11 Queries &
+                         Mutations
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │  Hono API + tRPC     │
+                  │     (apps/api)       │
+                  └──────────┬───────────┘
+                             │
+                     Drizzle ORM Queries
+                             │
+                             ▼
+                  ┌──────────────────────┐
+                  │ PostgreSQL Database  │
+                  └──────────────────────┘
+```
+
+*   **Monorepo Core**: [Turborepo](https://turbo.build/) for lightning-fast caching and workspace compilation.
+*   **Frontend App**: **Next.js 14** (App Router, Server Components) styled with **Vanilla CSS** (for theme overrides) and **Tailwind CSS / shadcn/ui** (for dashboard components).
+*   **API Server**: **Hono** combined with **tRPC v11** for end-to-end type safety between client and server.
+*   **Database & ORM**: **Drizzle ORM** with a **PostgreSQL** client database layer.
+*   **Bundler & Compiler**: `esbuild` for creating optimized, standalone production API builds.
+*   **Verification Utilities**: **Zod** schema validations shared across web and API workspaces.
+
+---
 
 ## 📁 Project Structure
 
 ```
 chaiforms/
 ├── apps/
-│   ├── web/          # Next.js frontend (dashboard + public forms)
-│   └── api/          # Hono backend (tRPC + API)
+│   ├── web/               # Next.js frontend (Creator dashboard + Public forms)
+│   └── api/               # Hono backend + tRPC server running on Node
 ├── packages/
-│   ├── db/           # Drizzle ORM + schema + migrations
-│   ├── schemas/      # Shared Zod schemas
-│   ├── trpc/         # tRPC router types
-│   ├── ui/           # Shared UI components
-│   ├── email/        # Email templates
-│   └── utils/        # Shared utilities
-├── turbo.json
-├── pnpm-workspace.yaml
-└── .env.example
+│   ├── db/                # PostgreSQL schema definitions, Drizzle migrations, & seed scripts
+│   ├── schemas/           # Shared Zod validation schemas (e.g. form fields, responses)
+│   ├── trpc/              # Router type signatures & client factory setup
+│   ├── ui/                # Shared layout & button components
+│   ├── email/             # Resend email templates & configuration
+│   └── utils/             # Helper utilities and type conversions
+├── tsconfig.base.json     # Base TypeScript compiler settings
+├── turbo.json             # Turborepo task pipeline config
+└── pnpm-workspace.yaml    # Workspace packaging map
 ```
-
-## ⚡ Quick Start
-
-### Prerequisites
-
-- **Node.js** ≥ 18
-- **pnpm** ≥ 8
-- **PostgreSQL** (Neon or local)
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/chaiforms
-cd chaiforms
-
-# Install dependencies
-pnpm install
-
-# Set up environment variables
-cp .env.example .env.local
-
-# Edit .env.local with your database URL and other secrets
-```
-
-### Database Setup
-
-```bash
-# Run migrations
-pnpm db:migrate
-
-# Seed demo data
-pnpm db:seed
-```
-
-### Development
-
-```bash
-# Start all apps (frontend + backend)
-pnpm dev
-
-# Frontend: http://localhost:3000
-# Backend: http://localhost:3001
-# API Docs: http://localhost:3001/docs
-```
-
-### Build for Production
-
-```bash
-# Build all apps
-pnpm build
-
-# Start frontend
-cd apps/web && pnpm start
-
-# Start backend
-cd apps/api && pnpm start
-```
-
-## 🌟 Features
-
-### Core Features ✅
-- Form builder with drag-and-drop field ordering
-- 18+ field types (text, email, number, rating, select, date, file, etc.)
-- Multi-page form support
-- Public + Unlisted visibility modes
-- Form publishing workflow
-- Response collection (no login required)
-- Real-time analytics dashboard
-- Email notifications
-
-### Bonus Features ✅
-- 14+ themed form experiences
-- Conditional logic between fields
-- Form expiry date enforcement
-- Response limit settings
-- CSV response export
-- Charts & analytics (Recharts)
-- Custom form slugs
-- QR code sharing
-- Password-protected forms
-- Form cloning & archiving
-- Template gallery
-- Admin dashboard
-- Rate limiting
-
-## 📊 Database Schema
-
-### Key Tables
-- **users** — Form creators
-- **forms** — Form definitions
-- **fields** — Form fields with validation rules
-- **responses** — Submitted form responses
-- **themes** — Pre-built form themes
-- **analytics_events** — Tracking events for analytics
-
-See [packages/db/src/schema.ts](packages/db/src/schema.ts) for full schema.
-
-## 🎨 Available Themes
-
-- 🎬 Movies: The Matrix, Interstellar, Blade Runner 2049
-- 📺 Anime: Demon Slayer, Spirited Away, Cyberpunk Edgerunners
-- 🎮 Games: Minecraft, Zelda TOTK, Elden Ring
-- 💻 Tech: Terminal, macOS, Windows XP
-- 🚀 Startups: Y Combinator, Chai Code
-
-## 📡 API Documentation
-
-Full API docs are available at: **http://localhost:3001/docs**
-
-### Public Endpoints
-- `GET /api/forms/explore` — List public forms
-- `GET /api/forms/{slug}` — Get form by slug
-- `POST /api/forms/{slug}/submit` — Submit a response
-
-### Protected Endpoints (require auth)
-- `POST /api/forms` — Create a new form
-- `GET /api/forms` — List creator's forms
-- `GET /api/forms/{id}/responses` — Get responses
-- `GET /api/forms/{id}/analytics` — Get analytics
-
-## 🔐 Rate Limiting
-
-- Form submissions: 5/hour per IP per form
-- Auth endpoints: 10 attempts per 15 minutes per IP
-- API (authenticated): 1000 req/hour per user
-
-## 🛠️ Development Commands
-
-```bash
-# Lint code
-pnpm lint
-
-# Type checking
-pnpm typecheck
-
-# Database studio (Drizzle UI)
-pnpm db:studio
-
-# Generate new migration
-pnpm db:generate
-
-# Clean build artifacts
-pnpm clean
-```
-
-## 📝 Environment Variables
-
-```env
-# Database
-DATABASE_URL=postgresql://user:password@host:5432/chaiforms
-
-# Auth
-AUTH_SECRET=your-32-character-random-secret
-FRONTEND_URL=http://localhost:3000
-
-# API URLs
-NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-
-# Email (Resend)
-RESEND_API_KEY=re_xxxxxxxxxxxxx
-
-# Redis (rate limiting)
-UPSTASH_REDIS_REST_URL=https://your-instance.upstash.io
-UPSTASH_REDIS_REST_TOKEN=token_here
-
-# File storage
-UPLOADTHING_SECRET=sk_xxxxxxxxxxxx
-UPLOADTHING_APP_ID=app_xxxxxxxxxxxx
-
-# Environment
-NODE_ENV=development
-```
-
-## 🚀 Deployment
-
-### Deploy to Vercel (Frontend)
-
-```bash
-# Connect your GitHub repo to Vercel
-# Set environment variables in Vercel dashboard
-# Deploy from main branch
-```
-
-### Deploy to Railway (Backend)
-
-```bash
-# Connect your GitHub repo to Railway
-# Set environment variables
-# Railway will auto-deploy on push
-```
-
-## 🤝 Contributing
-
-This is a hackathon submission. For issues or improvements, please create a pull request.
-
-## 📄 License
-
-MIT
 
 ---
 
-**Built with ☕ for MasterJi × Chai Code Hackathon 2026**
+## 🛠️ Installation & Local Setup
+
+### Prerequisites
+*   Node.js **≥ 18.0.0**
+*   pnpm **≥ 8.0.0**
+*   A running PostgreSQL instance (local or via Neon/Supabase)
+
+### 1. Clone & Install
+```bash
+# Clone the repository
+git clone https://github.com/ashaafkhan/ChaiForm.git
+cd ChaiForm
+
+# Install dependencies
+pnpm install
+```
+
+### 2. Configure Environment Variables
+Create a `.env.local` file in the root workspace (and matching files inside `apps/web` and `apps/api` if necessary, or simply declare them in your system environment):
+
+```env
+# Database Credentials
+DATABASE_URL="postgresql://username:password@localhost:5432/chaiforms"
+
+# Server Ports & URLs
+PORT=3001
+FRONTEND_URL="http://localhost:3000"
+NEXT_PUBLIC_API_URL="http://localhost:3001"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# Authentication Secrets
+JWT_SECRET="your-super-secret-key-here"
+
+# Email Configuration (Resend)
+RESEND_API_KEY="re_your_api_key"
+
+# Redis Configuration (For Rate Limiting)
+UPSTASH_REDIS_REST_URL="https://your-redis-url.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="your_redis_token"
+```
+
+### 3. Database Migration & Seeding
+```bash
+# Push database schemas
+pnpm db:migrate
+
+# Seed standard schemas and theme presets
+pnpm db:seed
+```
+
+### 4. Running the Development Servers
+```bash
+# Boot the Next.js dev server & the Hono API watch server in parallel
+pnpm dev
+
+# - Frontend will run at: http://localhost:3000
+# - Backend API will run at: http://localhost:3001
+# - Interactive API docs will run at: http://localhost:3001/docs
+```
+
+---
+
+## 📦 Production Bundling & Deployment Fix
+
+To ensure a seamless production deployment on platforms like Render, the API backend uses a custom build compiler setup:
+
+### The Challenge
+Standard Node.js ESM (`"type": "module"`) requires explicit extensions in file imports (e.g. `import './foo.js'`). TypeScript compiles relative paths without adding extensions. This normally causes Node.js deployments to crash with `ERR_MODULE_NOT_FOUND`. Furthermore, monorepo dependencies like `@chaiforms/db` point directly to `.ts` files, raising `ERR_UNKNOWN_FILE_EXTENSION`.
+
+### The Solution
+We integrated `esbuild` as the compiler bundle step in [apps/api/package.json](apps/api/package.json):
+```json
+"build": "tsc && esbuild src/index.ts --bundle --platform=node --target=node22 --outfile=dist/index.js --format=esm --external:hono --external:@hono/node-server --external:@scalar/hono-api-reference --external:@trpc/server --external:bcryptjs --external:drizzle-orm --external:jsonwebtoken --external:zod --external:pg"
+```
+*   **`tsc`**: Verifies type safety and enforces compilation standards.
+*   **`esbuild`**: Bundles all local monorepo typescript imports and dependencies into a single production-ready `dist/index.js` file, while excluding external npm dependencies.
+*   **Result**: Zero-config startup in native Node.js environments.
+
+---
+
+## 🚀 Key Features
+
+*   **Design & Fields Workspace Split**: Tabbed side panel ("Fields" vs "Design") in the creator editor sidebar. Tab selection automatically transitions to the fields panel when modifying form fields in the live canvas.
+*   **Interactive Theme Customizer**: Real-time picker enabling creators to override defaults (e.g. Background Color, Text Color, Accent Colors, Border Radius) and save configurations safely with debounced db mutations.
+*   **Zod Schema Type-Safety**: Automated serialization mapping flat client-side responses to match Zod backend validation constraints, preventing form submission errors.
+*   **Fully Responsive & Interactive Landing Showcase**: Interactive theme cards on the marketing landing page that dynamically render the active theme design to preview forms on-click.
+*   **Scalar Interactive Docs**: Dynamic OpenAPI visual references for all endpoints accessible on `/docs`.
+
+---
+
+## 🤝 Contribution & Maintenance
+
+This repository is maintained as a hackathon submission. For issues, optimization ideas, or pull requests, please open an issue in the repository.
+
+---
+
+**Built with ☕ for the MasterJi × Chai Code Hackathon 2026**
